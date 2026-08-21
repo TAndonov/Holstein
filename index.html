@@ -128,6 +128,20 @@
   .sync-note.on::before { background: var(--good); }
   .sync-note.off::before { background: var(--blood); }
   .sync-note b { color: var(--ink-soft); font-weight: 600; }
+  .sync-switch {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    margin: 8px auto 0; max-width: 480px;
+  }
+  .sync-switch input {
+    flex: 1 1 200px; font-family: var(--ui); font-size: 0.78rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 3px; padding: 7px 10px;
+  }
+  .sync-switch button {
+    font-family: var(--ui); font-size: 0.72rem; letter-spacing: 0.04em;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink-muted);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; white-space: nowrap;
+  }
+  .sync-switch button:hover { border-color: var(--blood); color: var(--ink); }
 
   /* ---------- Sticky budget rail ---------- */
   .rail {
@@ -371,6 +385,11 @@
     <h1>Kindred <span class="amp">of</span> Holstein</h1>
     <p class="dek">Fog over the salt marshes, wooden roads through wet forest, and politics played after sunset. Bind your dead soul to paper below.</p>
     <p class="sync-note" id="syncNote" hidden></p>
+    <div class="sync-switch" id="syncSwitch" hidden>
+      <button type="button" id="syncCopyBtn">Copy my link</button>
+      <input type="text" id="syncSwitchInput" placeholder="Paste a character's link or ID...">
+      <button type="button" id="syncSwitchBtn">Open</button>
+    </div>
   </header>
 
   <!-- Budget rail -->
@@ -1352,10 +1371,11 @@
 
     setSyncNote(
       isNewLink
-        ? "Synced — bookmark this exact page (with the link in your address bar) to return to this character."
+        ? "Synced — this is a new character. Copy your link below and bookmark it."
         : "Synced across devices.",
       "on"
     );
+    setupSwitchPanel();
   }
 
   function genId() {
@@ -1363,5 +1383,37 @@
     var id = "";
     for (var i = 0; i < 12; i++) id += chars[Math.floor(Math.random() * chars.length)];
     return id;
+  }
+
+  // Lets anyone copy their own character's link, or paste in someone else's
+  // link/ID to jump straight to it — the only way to move between characters,
+  // since there's no login or character list, just the link itself.
+  function setupSwitchPanel() {
+    var panel = document.getElementById("syncSwitch");
+    var input = document.getElementById("syncSwitchInput");
+    var copyBtn = document.getElementById("syncCopyBtn");
+    var openBtn = document.getElementById("syncSwitchBtn");
+    panel.hidden = false;
+
+    copyBtn.addEventListener("click", function () {
+      navigator.clipboard.writeText(location.href).then(function () {
+        window.KindredToast("Link copied — send it to whoever needs this character.");
+      }).catch(function () {
+        window.KindredToast("Couldn't copy automatically — copy the address bar instead.");
+      });
+    });
+
+    function openPasted() {
+      var raw = input.value.trim();
+      if (!raw) return;
+      var id = raw;
+      var match = raw.match(/[?&]char=([^&]+)/);
+      if (match) id = decodeURIComponent(match[1]);
+      location.search = "char=" + encodeURIComponent(id);
+    }
+    openBtn.addEventListener("click", openPasted);
+    input.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") openPasted();
+    });
   }
 </script>
