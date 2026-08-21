@@ -1280,12 +1280,12 @@
   //   4. Project settings (gear icon) > General > "Your apps" > Add app > Web (</>).
   //   5. Copy the firebaseConfig object it gives you into FIREBASE_CONFIG below.
   var FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+    apiKey: "AIzaSyC7Qx50sm2ZxBOWSL8XIu2matKonCGSeo4",
+    authDomain: "holstein-15494.firebaseapp.com",
+    projectId: "holstein-15494",
+    storageBucket: "holstein-15494.firebasestorage.app",
+    messagingSenderId: "232905080691",
+    appId: "1:232905080691:web:2b4665e967dfe7802bcf06"
   };
 
   var syncNote = document.getElementById("syncNote");
@@ -1316,8 +1316,14 @@
     if (!charId) {
       charId = genId();
       isNewLink = true;
-      params.set("char", charId);
-      history.replaceState(null, "", location.pathname + "?" + params.toString());
+      try {
+        params.set("char", charId);
+        history.replaceState(null, "", location.pathname + "?" + params.toString());
+      } catch (e) {
+        // Some sandboxed/embedded contexts block History API writes; sync still
+        // works, the URL just won't show ?char=... to bookmark.
+        console.warn("Kindred sync: couldn't update the address bar", e);
+      }
     }
 
     var docRef = fs.doc(db, "characters", charId);
