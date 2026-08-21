@@ -143,6 +143,52 @@
   }
   .sync-switch button:hover { border-color: var(--blood); color: var(--ink); }
 
+  /* ---------- Gate / character picker ---------- */
+  .wrap, .header-tools { display: none; }
+  body.state-sheet .wrap { display: block; }
+  body.state-sheet .header-tools { display: flex; }
+
+  .gate, .picker {
+    position: fixed; inset: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    background:
+      radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--blood) 8%, transparent), transparent 60%),
+      radial-gradient(140% 120% at 50% 120%, var(--bg-2), var(--bg) 55%);
+  }
+  .gate[hidden], .picker[hidden] { display: none; }
+  .gate-box, .picker-box {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: 0 2px 0 var(--line-soft), 0 14px 30px -22px var(--shadow);
+    padding: 32px 28px; max-width: 420px; width: 100%; text-align: center;
+  }
+  .gate-box h2, .picker-box h2 {
+    font-family: var(--serif); font-size: 1.6rem; color: var(--ink); margin: 6px 0 16px;
+  }
+  .gate-hint { font-size: 0.86rem; color: var(--ink-muted); margin: 0 0 16px; }
+  .gate-box input[type="password"] {
+    width: 100%; font-family: var(--body); font-size: 1rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 3px;
+    padding: 10px 12px; margin-bottom: 12px; text-align: center;
+  }
+  .gate-err { color: var(--blood-strong); font-size: 0.82rem; margin: 10px 0 0; }
+
+  .picker-box { max-width: 480px; text-align: left; }
+  .picker-box h2 { text-align: center; }
+  .char-list { display: flex; flex-direction: column; gap: 8px; margin: 0 0 18px; max-height: 50vh; overflow-y: auto; }
+  .char-list-empty { font-size: 0.88rem; color: var(--ink-muted); font-style: italic; text-align: center; margin: 10px 0; }
+  .char-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; text-align: left; cursor: pointer;
+    font-family: var(--body); font-size: 0.98rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 3px;
+    padding: 11px 14px;
+  }
+  .char-row:hover { border-color: var(--blood); }
+  .char-row-clan {
+    font-family: var(--ui); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--blood); border: 1px solid var(--blood); border-radius: 999px; padding: 2px 9px; flex: 0 0 auto;
+  }
+
   /* ---------- Sticky budget rail ---------- */
   .rail {
     position: sticky; top: 0; z-index: 50;
@@ -373,6 +419,25 @@
   }
 </style>
 
+<div class="gate" id="authGate">
+  <div class="gate-box">
+    <p class="eyebrow">Vampire · The Dark Ages · Holstein</p>
+    <h2>Kindred of Holstein</h2>
+    <p class="gate-hint">Enter the household password to continue.</p>
+    <input type="password" id="gatePw" autocomplete="off" autofocus>
+    <button type="button" id="gateBtn" class="btn primary">Enter</button>
+    <p class="gate-err" id="gateErr" hidden>Wrong password — try again.</p>
+  </div>
+</div>
+
+<div class="picker" id="charPicker" hidden>
+  <div class="picker-box">
+    <h2>Choose a Character</h2>
+    <div class="char-list" id="charList"></div>
+    <button type="button" id="newCharBtn" class="btn primary" style="width:100%">+ New Character</button>
+  </div>
+</div>
+
 <div class="header-tools">
   <button class="theme-toggle" id="descToggle" type="button">Show details</button>
   <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
@@ -387,8 +452,7 @@
     <p class="sync-note" id="syncNote" hidden></p>
     <div class="sync-switch" id="syncSwitch" hidden>
       <button type="button" id="syncCopyBtn">Copy my link</button>
-      <input type="text" id="syncSwitchInput" placeholder="Paste a character's link or ID...">
-      <button type="button" id="syncSwitchBtn">Open</button>
+      <button type="button" id="backToListBtn">Character List</button>
     </div>
   </header>
 
@@ -1307,6 +1371,61 @@
     appId: "1:232905080691:web:2b4665e967dfe7802bcf06"
   };
 
+  // ---- Password gate ----
+  // Soft deterrent only, not real security: the check runs in plain client-side
+  // JS, so anyone who opens dev tools could bypass it outright regardless of how
+  // the password is stored. Hashing here just means the password itself isn't
+  // sitting in plain text in the page source or the public repo's history.
+  var SHARED_PASSWORD_HASH = "a2d3fcd68f5fdb226432f256a4cde76a123d24a1b81aea49339d2d6147375cff";
+  var AUTH_KEY = "kindred-auth-ok";
+
+  async function sha256Hex(text) {
+    var bytes = new TextEncoder().encode(text);
+    var digest = await crypto.subtle.digest("SHA-256", bytes);
+    var hex = "";
+    var view = new Uint8Array(digest);
+    for (var i = 0; i < view.length; i++) hex += view[i].toString(16).padStart(2, "0");
+    return hex;
+  }
+
+  var gate = document.getElementById("authGate");
+  var gatePw = document.getElementById("gatePw");
+  var gateBtn = document.getElementById("gateBtn");
+  var gateErr = document.getElementById("gateErr");
+
+  async function tryPassword() {
+    var hash;
+    try {
+      hash = await sha256Hex(gatePw.value);
+    } catch (e) {
+      console.warn("Kindred gate: hashing unavailable", e);
+      gateErr.textContent = "This browser can't check the password (needs HTTPS or a modern browser).";
+      gateErr.hidden = false;
+      return;
+    }
+    if (hash === SHARED_PASSWORD_HASH) {
+      gate.hidden = true;
+      try { localStorage.setItem(AUTH_KEY, "1"); } catch (e) {}
+      afterAuth();
+    } else {
+      gateErr.textContent = "Wrong password — try again.";
+      gateErr.hidden = false;
+      gatePw.value = "";
+      gatePw.focus();
+    }
+  }
+  gateBtn.addEventListener("click", tryPassword);
+  gatePw.addEventListener("keydown", function (ev) { if (ev.key === "Enter") tryPassword(); });
+
+  var alreadyAuthed = false;
+  try { alreadyAuthed = localStorage.getItem(AUTH_KEY) === "1"; } catch (e) {}
+  if (alreadyAuthed) {
+    gate.hidden = true;
+    afterAuth();
+  }
+  // else: gate stays visible (it's the default), afterAuth() runs once tryPassword() succeeds.
+
+  // ---- Everything below only runs after the gate is passed ----
   var syncNote = document.getElementById("syncNote");
   function setSyncNote(text, cls) {
     syncNote.textContent = text;
@@ -1314,42 +1433,113 @@
     syncNote.hidden = false;
   }
 
-  if (!FIREBASE_CONFIG.apiKey) {
-    // Not configured — leave the app in local-only mode, no note shown.
-  } else {
-    startSync().catch(function (e) {
-      console.warn("Kindred sync: failed to start", e);
+  function showSheet() {
+    document.body.classList.add("state-sheet");
+  }
+
+  function afterAuth() {
+    if (!FIREBASE_CONFIG.apiKey) {
+      // No sync configured — just show the sheet, local-only, same as before this feature existed.
+      showSheet();
+      return;
+    }
+    initFirebase().then(function () {
+      var params = new URLSearchParams(location.search);
+      var charId = params.get("char");
+      if (charId) {
+        openCharacter(charId, false);
+      } else {
+        showPicker();
+      }
+    }).catch(function (e) {
+      console.warn("Kindred sync: init failed", e);
       setSyncNote("Sync unavailable — saving to this browser only.", "off");
+      showSheet();
     });
   }
 
-  async function startSync() {
+  var db = null, fsApi = null;
+  async function initFirebase() {
     var appMod = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js");
-    var fs = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
+    fsApi = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
     var app = appMod.initializeApp(FIREBASE_CONFIG);
-    var db = fs.getFirestore(app);
+    db = fsApi.getFirestore(app);
+  }
 
-    var params = new URLSearchParams(location.search);
-    var charId = params.get("char");
-    var isNewLink = false;
-    if (!charId) {
-      charId = genId();
-      isNewLink = true;
-      try {
-        params.set("char", charId);
-        history.replaceState(null, "", location.pathname + "?" + params.toString());
-      } catch (e) {
-        // Some sandboxed/embedded contexts block History API writes; sync still
-        // works, the URL just won't show ?char=... to bookmark.
-        console.warn("Kindred sync: couldn't update the address bar", e);
-      }
+  // ---- Character picker ----
+  var picker = document.getElementById("charPicker");
+  var charListEl = document.getElementById("charList");
+  var newCharBtn = document.getElementById("newCharBtn");
+
+  async function showPicker() {
+    picker.hidden = false;
+    charListEl.innerHTML = '<p class="char-list-empty">Loading characters…</p>';
+    try {
+      var snaps = await fsApi.getDocs(fsApi.collection(db, "characters"));
+      var rows = [];
+      snaps.forEach(function (d) {
+        var data = d.data();
+        var name = (data.fields && data.fields.f_name) || ("Unnamed (" + d.id.slice(0, 5) + ")");
+        rows.push({ id: d.id, name: name, clan: data.clan || "" });
+      });
+      rows.sort(function (a, b) { return a.name.localeCompare(b.name); });
+      renderCharList(rows);
+    } catch (e) {
+      console.warn("Kindred sync: character list failed", e);
+      charListEl.innerHTML = '<p class="char-list-empty">Couldn’t load the character list.</p>';
     }
+  }
 
-    var docRef = fs.doc(db, "characters", charId);
+  function renderCharList(rows) {
+    if (!rows.length) {
+      charListEl.innerHTML = '<p class="char-list-empty">No characters yet — start one below.</p>';
+      return;
+    }
+    charListEl.innerHTML = "";
+    rows.forEach(function (row) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "char-row";
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = row.name;
+      btn.appendChild(nameSpan);
+      if (row.clan) {
+        var clanSpan = document.createElement("span");
+        clanSpan.className = "char-row-clan";
+        clanSpan.textContent = row.clan;
+        btn.appendChild(clanSpan);
+      }
+      btn.addEventListener("click", function () { goToCharacter(row.id); });
+      charListEl.appendChild(btn);
+    });
+  }
+
+  newCharBtn.addEventListener("click", function () { goToCharacter(genId(), true); });
+
+  // Full reload on purpose: keeps exactly one Firestore listener alive per page
+  // load, tied to exactly one character. Switching in-place would need to tear
+  // down the old listener first or risk writing to the wrong document.
+  function goToCharacter(id) {
+    var params = new URLSearchParams(location.search);
+    params.set("char", id);
+    location.search = params.toString();
+  }
+
+  function genId() {
+    var chars = "abcdefghijkmnopqrstuvwxyz23456789";
+    var id = "";
+    for (var i = 0; i < 12; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  }
+
+  // ---- Opening one character's sheet ----
+  function openCharacter(charId) {
+    picker.hidden = true;
+    var docRef = fsApi.doc(db, "characters", charId);
     var applyingRemote = false;
     var gotFirstSnapshot = false;
 
-    fs.onSnapshot(docRef, function (snap) {
+    fsApi.onSnapshot(docRef, function (snap) {
       if (snap.exists()) {
         applyingRemote = true;
         window.KindredApplyData(snap.data());
@@ -1364,56 +1554,30 @@
 
     document.addEventListener("kindred:change", function (ev) {
       if (applyingRemote) return;
-      fs.setDoc(docRef, ev.detail).catch(function (e) {
+      fsApi.setDoc(docRef, ev.detail).catch(function (e) {
         console.warn("Kindred sync: save failed", e);
       });
     });
 
-    setSyncNote(
-      isNewLink
-        ? "Synced — this is a new character. Copy your link below and bookmark it."
-        : "Synced across devices.",
-      "on"
-    );
-    setupSwitchPanel();
+    setSyncNote("Synced across devices.", "on");
+    setupSyncButtons();
+    showSheet();
   }
 
-  function genId() {
-    var chars = "abcdefghijkmnopqrstuvwxyz23456789";
-    var id = "";
-    for (var i = 0; i < 12; i++) id += chars[Math.floor(Math.random() * chars.length)];
-    return id;
-  }
-
-  // Lets anyone copy their own character's link, or paste in someone else's
-  // link/ID to jump straight to it — the only way to move between characters,
-  // since there's no login or character list, just the link itself.
-  function setupSwitchPanel() {
+  function setupSyncButtons() {
     var panel = document.getElementById("syncSwitch");
-    var input = document.getElementById("syncSwitchInput");
-    var copyBtn = document.getElementById("syncCopyBtn");
-    var openBtn = document.getElementById("syncSwitchBtn");
     panel.hidden = false;
-
-    copyBtn.addEventListener("click", function () {
+    document.getElementById("syncCopyBtn").addEventListener("click", function () {
       navigator.clipboard.writeText(location.href).then(function () {
         window.KindredToast("Link copied — send it to whoever needs this character.");
       }).catch(function () {
         window.KindredToast("Couldn't copy automatically — copy the address bar instead.");
       });
     });
-
-    function openPasted() {
-      var raw = input.value.trim();
-      if (!raw) return;
-      var id = raw;
-      var match = raw.match(/[?&]char=([^&]+)/);
-      if (match) id = decodeURIComponent(match[1]);
-      location.search = "char=" + encodeURIComponent(id);
-    }
-    openBtn.addEventListener("click", openPasted);
-    input.addEventListener("keydown", function (ev) {
-      if (ev.key === "Enter") openPasted();
+    document.getElementById("backToListBtn").addEventListener("click", function () {
+      var params = new URLSearchParams(location.search);
+      params.delete("char");
+      location.search = params.toString();
     });
   }
 </script>
