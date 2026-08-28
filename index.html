@@ -729,7 +729,7 @@
   initValues();
 
   // ---- XP advancement (post-creation dots, layered on top of the pools above) ----
-  var xpValues = { attributes: {}, abilities: {} };
+  var xpValues = { attributes: {}, abilities: {}, disciplines: {} };
   var xp = { current: 0 };
   var vitals = { willpower: 0, hunger: 0, humanity: 7, path: 0 };
 
@@ -738,6 +738,7 @@
   // Cost to raise a stat from `ratingBefore` to `ratingBefore + 1` via XP.
   function dotCost(pool, ratingBefore) {
     if (pool === "attributes") return ratingBefore * 3;
+    if (pool === "disciplines") return 7; // flat, beyond the 3 creation points
     return ratingBefore === 0 ? 3 : ratingBefore * 2; // abilities: first dot flat 3, then current*2
   }
 
@@ -775,7 +776,7 @@
       dots.appendChild(d);
     }
     row.appendChild(dots);
-    var xpAware = (pool === "attributes" || pool === "abilities");
+    var xpAware = (pool === "attributes" || pool === "abilities" || pool === "disciplines");
     dots.addEventListener("click", function (ev) {
       var t = ev.target.closest(".dot"); if (!t) return;
       if (xpAware) handleDotXp(pool, key, parseInt(t.dataset.i, 10), row);
@@ -879,7 +880,7 @@
 
   function repaintPool(pool, container) {
     var rows = container.querySelectorAll(".stat");
-    var xpAware = (pool === "attributes" || pool === "abilities");
+    var xpAware = (pool === "attributes" || pool === "abilities" || pool === "disciplines");
     rows.forEach(function (row) {
       var key = row.dataset.key;
       if (xpAware) {
@@ -966,11 +967,17 @@
   var clanTag = document.getElementById("clanTag");
   function renderDisciplines(clan) {
     discMount.innerHTML = "";
+    // Switching clan replaces the whole discipline list — refund any XP spent
+    // on the old ones first, since those rows (and the dots on them) are gone.
+    for (var k in xpValues.disciplines) {
+      if (xpValues.disciplines.hasOwnProperty(k)) xp.current += xpValues.disciplines[k] * 7;
+    }
     values.disciplines = {};
+    xpValues.disciplines = {};
     if (!clan || !CLANS[clan]) {
       discMount.appendChild(el("p", "disc-empty", "Choose a Clan to reveal its Disciplines."));
       clanTag.classList.remove("show"); clanTag.textContent = "";
-      updateRail(); return;
+      updateXpReadout(); return;
     }
     clanTag.textContent = clan; clanTag.classList.add("show");
     CLANS[clan].forEach(function (d) {
@@ -978,7 +985,7 @@
       var row = makeStatRow("disciplines", d, DISCIPLINE_DESC[d], DISCIPLINES);
       discMount.appendChild(row);
     });
-    updateRail();
+    updateXpReadout();
   }
   clanSel.addEventListener("change", function () { renderDisciplines(clanSel.value); save(); });
 
@@ -1145,7 +1152,7 @@
         if (values.disciplines.hasOwnProperty(k2)) values.disciplines[k2] = data.values.disciplines[k2];
     }
     if (data.xpValues) {
-      ["attributes", "abilities"].forEach(function (pool) {
+      ["attributes", "abilities", "disciplines"].forEach(function (pool) {
         if (data.xpValues[pool]) xpValues[pool] = data.xpValues[pool];
       });
     }
@@ -1251,10 +1258,14 @@
     });
     L.push("");
 
-    L.push("-- DISCIPLINES (" + spent("disciplines") + "/" + DISCIPLINES.pool + ") --");
+    L.push("-- DISCIPLINES (" + spent("disciplines") + "/" + DISCIPLINES.pool + " creation pts) --");
     if (clanSel.value && CLANS[clanSel.value]) {
       CLANS[clanSel.value].forEach(function (d) {
-        L.push("    " + pad(d, 18) + dots(values.disciplines[d] || 0, 5) + "  (" + (values.disciplines[d] || 0) + ")");
+        var free = values.disciplines[d] || 0;
+        var xpv = xpValues.disciplines[d] || 0;
+        var total = free + xpv;
+        var suffix = xpv ? "  (+" + xpv + " xp)" : "";
+        L.push("    " + pad(d, 18) + dots(total, 5) + "  (" + total + ")" + suffix);
       });
     } else { L.push("    (no clan chosen)"); }
     L.push("");
