@@ -763,7 +763,10 @@
 
   function spent(pool) {
     var cfg = POOLCFG[pool], sum = 0, v = values[pool];
-    for (var k in v) if (v.hasOwnProperty(k)) sum += (v[k] - cfg.min);
+    for (var k in v) if (v.hasOwnProperty(k)) {
+      var min = (pool === "disciplines" && discMinOverride[k]) ? discMinOverride[k] : cfg.min;
+      sum += (v[k] - min);
+    }
     return sum;
   }
   function remaining(pool) { return POOLCFG[pool].pool - spent(pool); }
@@ -776,7 +779,7 @@
     return e;
   }
 
-  function makeStatRow(pool, key, desc, cfg) {
+  function makeStatRow(pool, key, desc, cfg, minOverride) {
     var row = el("div", "stat");
     row.dataset.pool = pool; row.dataset.key = key;
     var meta = el("div", "meta");
@@ -784,12 +787,13 @@
     if (desc) meta.appendChild(el("div", "desc", desc));
     row.appendChild(meta);
 
+    var rowMin = (minOverride != null) ? minOverride : cfg.min;
     var dots = el("div", "dots");
     for (var i = 1; i <= DOTS_SHOWN; i++) {
       var d = document.createElement("button");
       d.type = "button"; d.className = "dot"; d.dataset.i = i;
       d.setAttribute("aria-label", key + " " + i);
-      if (i <= cfg.min) d.classList.add("base");
+      if (i <= rowMin) d.classList.add("base");
       dots.appendChild(d);
     }
     row.appendChild(dots);
@@ -825,11 +829,12 @@
   function handleDotXp(pool, key, i, row) {
     var cfg = POOLCFG[pool];
     var xpMap = xpValues[pool];
+    var rowMin = (pool === "disciplines" && discMinOverride[key]) ? discMinOverride[key] : cfg.min;
     var freeVal = values[pool][key];
     var xpVal = xpMap[key] || 0;
     var total = freeVal + xpVal;
     var target = (i === total) ? total - 1 : i;
-    if (target < cfg.min) target = cfg.min;
+    if (target < rowMin) target = rowMin;
     if (target > DOTS_SHOWN) target = DOTS_SHOWN;
 
     var blockedXp = false;
@@ -858,7 +863,7 @@
         xpVal -= 1;
         xpMap[key] = xpVal;
         total -= 1;
-      } else if (freeVal > cfg.min) {
+      } else if (freeVal > rowMin) {
         freeVal -= 1;
         values[pool][key] = freeVal;
         total -= 1;
@@ -990,6 +995,11 @@
   // across clan changes (a clan swap only affects the innate list below).
   var extraDisciplines = [];
 
+  // A discipline added via the dropdown starts at 1 dot for free (no XP, and
+  // not drawn from the 3-point creation pool). discMinOverride[key] records
+  // that personal floor, same role cfg.min plays for the shared pool.
+  var discMinOverride = {};
+
   function clanDisciplines() {
     var clan = clanSel.value;
     return (clan && CLANS[clan]) ? CLANS[clan] : [];
@@ -1022,7 +1032,7 @@
       }
     });
     active.forEach(function (d) {
-      if (!values.disciplines.hasOwnProperty(d)) values.disciplines[d] = 0;
+      if (!values.disciplines.hasOwnProperty(d)) values.disciplines[d] = discMinOverride[d] || 0;
     });
 
     discMount.innerHTML = "";
@@ -1030,7 +1040,7 @@
       discMount.appendChild(el("p", "disc-empty", "Choose a Clan to reveal its Disciplines."));
     } else {
       active.forEach(function (d) {
-        var row = makeStatRow("disciplines", d, DISCIPLINE_DESC[d], DISCIPLINES);
+        var row = makeStatRow("disciplines", d, DISCIPLINE_DESC[d], DISCIPLINES, discMinOverride[d]);
         discMount.appendChild(row);
       });
       repaintPool("disciplines", discMount);
@@ -1067,9 +1077,10 @@
     if (!picked) return;
     if (activeDisciplines().indexOf(picked) !== -1) return; // already have it
     extraDisciplines.push(picked);
+    discMinOverride[picked] = 1; // first dot is free, outside the creation pool and XP
     rebuildDisciplineList();
     save();
-    toast(picked + " added — spend points or XP to raise it.");
+    toast(picked + " added at 1 point — further points cost XP.");
   });
 
   clanSel.addEventListener("change", function () { rebuildDisciplineList(); save(); });
@@ -1201,7 +1212,7 @@
   function gather() {
     var data = {
       fields: {}, values: values, xpValues: xpValues, xp: xp, vitals: vitals,
-      clan: clanSel.value, extraDisciplines: extraDisciplines,
+      clan: clanSel.value, extraDisciplines: extraDisciplines, discMinOverride: discMinOverride,
       equip: (document.querySelector('input[name=equip]:checked') || {}).value || ""
     };
     textIds.forEach(function (id) { var e = document.getElementById(id); if (e) data.fields[id] = e.value; });
@@ -1229,6 +1240,7 @@
       });
     }
     if (data.extraDisciplines) extraDisciplines = data.extraDisciplines.slice();
+    if (data.discMinOverride) discMinOverride = Object.assign({}, data.discMinOverride);
     if (data.clan) clanSel.value = data.clan;
     rebuildDisciplineList();
     if (data.values) {
