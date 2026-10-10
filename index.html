@@ -336,6 +336,12 @@
   /* Disciplines */
   #disc-list .stat .desc { font-style: italic; }
   .disc-empty { font-family: var(--ui); font-size: 0.85rem; color: var(--ink-muted); font-style: italic; padding: 6px 0; }
+  .add-disc-row { display: flex; gap: 10px; margin-top: 16px; }
+  .add-disc-row select {
+    flex: 1 1 auto; font-family: var(--ui); font-size: 0.86rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 3px; padding: 9px 11px;
+  }
+  .add-disc-row .btn { flex: 0 0 auto; padding: 9px 18px; }
   .clan-tag {
     font-family: var(--ui); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--blood); border: 1px solid var(--blood); border-radius: 999px; padding: 2px 10px;
@@ -547,6 +553,10 @@
       <select id="f_clan"><option value="">— choose a Clan —</option></select>
     </label>
     <div id="disc-list"><p class="disc-empty">Choose a Clan to reveal its Disciplines.</p></div>
+    <div class="add-disc-row">
+      <select id="f_add_discipline"><option value="">— Add a Discipline learned in play —</option></select>
+      <button type="button" id="addDiscBtn" class="btn">+ Add</button>
+    </div>
   </section>
 
   <!-- Backgrounds -->
@@ -665,7 +675,14 @@
     "Protean": "Abandon human form — adapt, grow, merge with earth, transform.",
     "Koldunic Sorcery": "Bind blood to the spirits of a land — invoke, command, ward, curse.",
     "Obfuscate": "Withdraw from attention — conceal, silence, disappear, misdirect, infiltrate.",
-    "Quietus": "Pass sentence on the condemned — accuse, mark, silence, poison, execute."
+    "Quietus": "Pass sentence on the condemned — accuse, mark, silence, poison, execute.",
+    "Animalism": "Kinship with beasts and the Beast within — speak with animals, summon them, calm or incite frenzy.",
+    "Chimerstry": "Illusion woven into belief — conjure, mislead, frighten, delight with things that are not there.",
+    "Dementation": "Madness as a weapon — unravel composure, plant terror, twist perception, break certainty.",
+    "Necromancy": "Command over the restless dead — speak with ghosts, raise and bind them, ward against the beyond.",
+    "Serpentis": "The serpent's patience and venom — mesmerise, corrupt, harden the flesh, strike like a viper.",
+    "Thaumaturgy": "Blood sorcery of the Tremere — ritual, ward, curse, bend blood itself to the will.",
+    "Valeren": "A healer's old gift turned to war — mend, protect, smite, resist corruption of the soul."
   };
 
   var CLANS = {
@@ -965,29 +982,97 @@
   // ---- Clan / Disciplines ----
   var discMount = document.getElementById("disc-list");
   var clanTag = document.getElementById("clanTag");
-  function renderDisciplines(clan) {
-    discMount.innerHTML = "";
-    // Switching clan replaces the whole discipline list — refund any XP spent
-    // on the old ones first, since those rows (and the dots on them) are gone.
-    for (var k in xpValues.disciplines) {
-      if (xpValues.disciplines.hasOwnProperty(k)) xp.current += xpValues.disciplines[k] * 7;
-    }
-    values.disciplines = {};
-    xpValues.disciplines = {};
-    if (!clan || !CLANS[clan]) {
-      discMount.appendChild(el("p", "disc-empty", "Choose a Clan to reveal its Disciplines."));
-      clanTag.classList.remove("show"); clanTag.textContent = "";
-      updateXpReadout(); return;
-    }
-    clanTag.textContent = clan; clanTag.classList.add("show");
-    CLANS[clan].forEach(function (d) {
-      values.disciplines[d] = 0;
-      var row = makeStatRow("disciplines", d, DISCIPLINE_DESC[d], DISCIPLINES);
-      discMount.appendChild(row);
+  var addDiscSelect = document.getElementById("f_add_discipline");
+  var addDiscBtn = document.getElementById("addDiscBtn");
+  var ALL_DISCIPLINES = Object.keys(DISCIPLINE_DESC).sort();
+
+  // Disciplines learned in play, beyond the clan's starting 3 — persists
+  // across clan changes (a clan swap only affects the innate list below).
+  var extraDisciplines = [];
+
+  function clanDisciplines() {
+    var clan = clanSel.value;
+    return (clan && CLANS[clan]) ? CLANS[clan] : [];
+  }
+
+  function activeDisciplines() {
+    var active = clanDisciplines().slice();
+    extraDisciplines.forEach(function (d) {
+      if (active.indexOf(d) === -1) active.push(d);
     });
+    return active;
+  }
+
+  // Rebuilds the discipline rows from (clan's innate list) + (extras added in
+  // play). Called on clan change and on adding a discipline — either can
+  // change which rows should exist. Anything that drops out of the active set
+  // (e.g. the old clan's disciplines, when switching clan) gets its XP-bought
+  // dots refunded first, since that row and its dots are about to disappear.
+  function rebuildDisciplineList() {
+    var active = activeDisciplines();
+    var activeSet = {};
+    active.forEach(function (d) { activeSet[d] = true; });
+
+    Object.keys(values.disciplines).forEach(function (k) {
+      if (!activeSet[k]) {
+        var xpv = xpValues.disciplines[k] || 0;
+        if (xpv) xp.current += xpv * 7;
+        delete values.disciplines[k];
+        delete xpValues.disciplines[k];
+      }
+    });
+    active.forEach(function (d) {
+      if (!values.disciplines.hasOwnProperty(d)) values.disciplines[d] = 0;
+    });
+
+    discMount.innerHTML = "";
+    if (!active.length) {
+      discMount.appendChild(el("p", "disc-empty", "Choose a Clan to reveal its Disciplines."));
+    } else {
+      active.forEach(function (d) {
+        var row = makeStatRow("disciplines", d, DISCIPLINE_DESC[d], DISCIPLINES);
+        discMount.appendChild(row);
+      });
+      repaintPool("disciplines", discMount);
+    }
+
+    if (clanSel.value && CLANS[clanSel.value]) {
+      clanTag.textContent = clanSel.value; clanTag.classList.add("show");
+    } else {
+      clanTag.classList.remove("show"); clanTag.textContent = "";
+    }
+
+    refreshAddDisciplineOptions();
     updateXpReadout();
   }
-  clanSel.addEventListener("change", function () { renderDisciplines(clanSel.value); save(); });
+
+  function refreshAddDisciplineOptions() {
+    var active = activeDisciplines();
+    var current = addDiscSelect.value;
+    addDiscSelect.innerHTML = "";
+    var blank = el("option"); blank.value = ""; blank.textContent = "— Add a Discipline learned in play —";
+    addDiscSelect.appendChild(blank);
+    ALL_DISCIPLINES.forEach(function (d) {
+      if (active.indexOf(d) !== -1) return;
+      var o = el("option"); o.value = d; o.textContent = d;
+      addDiscSelect.appendChild(o);
+    });
+    if (Array.from(addDiscSelect.options).some(function (o) { return o.value === current; })) {
+      addDiscSelect.value = current;
+    }
+  }
+
+  addDiscBtn.addEventListener("click", function () {
+    var picked = addDiscSelect.value;
+    if (!picked) return;
+    if (activeDisciplines().indexOf(picked) !== -1) return; // already have it
+    extraDisciplines.push(picked);
+    rebuildDisciplineList();
+    save();
+    toast(picked + " added — spend points or XP to raise it.");
+  });
+
+  clanSel.addEventListener("change", function () { rebuildDisciplineList(); save(); });
 
   // ---- Rail ----
   var pathNameInput = document.getElementById("f_path_name");
@@ -1116,7 +1201,8 @@
   function gather() {
     var data = {
       fields: {}, values: values, xpValues: xpValues, xp: xp, vitals: vitals,
-      clan: clanSel.value, equip: (document.querySelector('input[name=equip]:checked') || {}).value || ""
+      clan: clanSel.value, extraDisciplines: extraDisciplines,
+      equip: (document.querySelector('input[name=equip]:checked') || {}).value || ""
     };
     textIds.forEach(function (id) { var e = document.getElementById(id); if (e) data.fields[id] = e.value; });
     return data;
@@ -1142,7 +1228,9 @@
         if (e && data.fields[id] != null) e.value = data.fields[id];
       });
     }
-    if (data.clan) { clanSel.value = data.clan; renderDisciplines(data.clan); }
+    if (data.extraDisciplines) extraDisciplines = data.extraDisciplines.slice();
+    if (data.clan) clanSel.value = data.clan;
+    rebuildDisciplineList();
     if (data.values) {
       ["attributes","abilities","backgrounds"].forEach(function (pool) {
         if (data.values[pool]) for (var k in data.values[pool])
@@ -1259,13 +1347,17 @@
     L.push("");
 
     L.push("-- DISCIPLINES (" + spent("disciplines") + "/" + DISCIPLINES.pool + " creation pts) --");
-    if (clanSel.value && CLANS[clanSel.value]) {
-      CLANS[clanSel.value].forEach(function (d) {
+    var activeDiscs = activeDisciplines();
+    if (activeDiscs.length) {
+      var clanDiscSet = {};
+      clanDisciplines().forEach(function (d) { clanDiscSet[d] = true; });
+      activeDiscs.forEach(function (d) {
         var free = values.disciplines[d] || 0;
         var xpv = xpValues.disciplines[d] || 0;
         var total = free + xpv;
         var suffix = xpv ? "  (+" + xpv + " xp)" : "";
-        L.push("    " + pad(d, 18) + dots(total, 5) + "  (" + total + ")" + suffix);
+        var learned = clanDiscSet[d] ? "" : "  [learned in play]";
+        L.push("    " + pad(d, 18) + dots(total, 5) + "  (" + total + ")" + suffix + learned);
       });
     } else { L.push("    (no clan chosen)"); }
     L.push("");
