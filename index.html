@@ -195,8 +195,15 @@
     font-family: var(--ui); font-weight: 600; font-variant-numeric: tabular-nums;
     background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
   }
-  .dice-chip.ten { border-color: var(--good); color: var(--good); background: color-mix(in srgb, var(--good) 16%, var(--surface-2)); }
-  .dice-chip.one { border-color: var(--blood-strong); color: var(--blood-strong); background: color-mix(in srgb, var(--blood) 14%, var(--surface-2)); }
+  .dice-hunger { font-family: var(--ui); font-size: 0.8rem; color: var(--ink-muted); }
+  .dice-hunger b { color: var(--ink); font-size: 1rem; margin-left: 2px; }
+  /* chips echo the dice: black for regular, white for Hunger; green = critical (10), red = botch (1) */
+  .dice-chip.reg { background: #17110f; color: #e6dcc4; border-color: #3a2d24; }
+  .dice-chip.hun { background: #f1e9d6; color: #2a1812; border-color: #b8a67e; }
+  .dice-chip.reg.ten { color: #62e07f; border-color: #3f9f5a; }
+  .dice-chip.reg.one { color: #ff6b72; border-color: #b3283a; }
+  .dice-chip.hun.ten { color: #13803d; border-color: #2e9e55; }
+  .dice-chip.hun.one { color: #b3121f; border-color: #c8283a; }
 
   /* ---------- Gate / character picker ---------- */
   .wrap, .header-tools { display: none; }
@@ -678,6 +685,7 @@
         <button class="dice-step" id="dicePlus" type="button" aria-label="More dice">+</button>
       </div>
       <button class="btn primary" id="diceRollBtn" type="button">Roll</button>
+      <span class="dice-hunger" title="Taken from the Hunger on your sheet. Hunger dice are part of the roll, not extra.">Hunger <b id="diceHunger">0</b></span>
     </div>
     <div class="dice-results" id="diceResults" aria-live="polite"></div>
   </div>
@@ -1630,6 +1638,8 @@
     var u = vsub(v[0], v[2]);
     u = vnorm(vsub(u, vscale(n, vdot(u, n))));
     f.n = n; f.c = c; f.u = u; f.r = vcross(u, n); // numeral reads along r, upright along u
+    // The kite's corners in the face's own (right, down) coordinates, centred on the numeral.
+    f.local = v.map(function (p) { var d = vsub(p, c); return [vdot(d, f.r), -vdot(d, f.u)]; });
   });
   // Faces are numbered 0-9 ("0" is printed as 10) so opposite faces add up to 9, like a real d10.
   var UPPER_LABELS = [0, 2, 4, 6, 8];
@@ -1678,6 +1688,13 @@
   } catch (e) {}
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  // Hunger comes straight from the dots on the sheet behind the tray.
+  var hungerLbl = document.getElementById("diceHunger");
+  function readHunger() {
+    var h = document.querySelectorAll("#hungerDots .dot.filled").length;
+    if (hungerLbl) hungerLbl.textContent = h;
+    return h;
+  }
   function getCount() {
     var n = parseInt(input.value, 10);
     if (isNaN(n)) n = 1;
@@ -1687,11 +1704,12 @@
     return vnorm([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5]);
   }
 
-  // The dice are carved from a procedurally generated blood-red marble: warped noise
-  // for the cloudy body, thin bright veins, and a scatter of gold flecks. Generated
-  // once when the page loads, then reused (shifted differently) on every face.
+  // The dice are carved from procedurally generated stone: warped noise for the cloudy
+  // body, thin bright veins, and a scatter of flecks. Each kind of die gets its own
+  // palette, generated once when the page loads, then reused (shifted differently)
+  // on every face.
   var MARBLE_PX = 320, MARBLE_UNITS = 3.2;
-  var marble = (function () {
+  function makeStone(P) {
     var cv = document.createElement("canvas");
     cv.width = cv.height = MARBLE_PX;
     var g = cv.getContext("2d"), img = g.createImageData(MARBLE_PX, MARBLE_PX), px = img.data;
@@ -1713,25 +1731,46 @@
         var nx = x / MARBLE_PX * 3, ny = y / MARBLE_PX * 3;
         var q = fbm(nx, ny);
         var w = fbm(nx * 1.4 + q * 2.2 + 7.3, ny * 1.4 + q * 2.2 + 1.9);
-        var vein = Math.pow(1 - Math.abs(Math.sin((nx * 1.3 + w * 3.2) * Math.PI)), 6);
-        var t = clamp(w * 1.6 - 0.3, 0, 1);
-        var rC = 14 + 128 * Math.pow(t, 1.4), gC = 2 + 14 * t, bC = 6 + 22 * t;   // near-black stone shading into deep crimson
-        rC += vein * 150; gC += vein * 62; bC += vein * 26;                        // molten red-orange veins
-        if (hash(x * 0.37, y * 0.37 + 90) > 0.978) { rC += 90; gC += 70; bC += 25; } // gold flecks
+        var vein = Math.pow(1 - Math.abs(Math.sin((nx * 1.3 + w * 3.2) * Math.PI)), P.veinPow);
+        var vein2 = Math.pow(1 - Math.abs(Math.sin((ny * 0.9 - w * 2.6 + q * 1.5) * Math.PI)), 9);
+        var t = clamp(w * 1.6 - 0.3, 0, 1), tg = Math.pow(t, P.gamma);
+        var rC = P.lo[0] + (P.hi[0] - P.lo[0]) * tg, gC = P.lo[1] + (P.hi[1] - P.lo[1]) * tg, bC = P.lo[2] + (P.hi[2] - P.lo[2]) * tg;
+        rC += vein * P.vein[0] + vein2 * P.vein2[0]; gC += vein * P.vein[1] + vein2 * P.vein2[1]; bC += vein * P.vein[2] + vein2 * P.vein2[2];
+        if (hash(x * 0.37, y * 0.37 + 90) > 0.978) { rC += P.fleck[0]; gC += P.fleck[1]; bC += P.fleck[2]; }
         var i = (y * MARBLE_PX + x) * 4;
         px[i] = clamp(rC, 0, 255); px[i + 1] = clamp(gC, 0, 255); px[i + 2] = clamp(bC, 0, 255); px[i + 3] = 255;
       }
     }
     g.putImageData(img, 0, 0);
     return cv;
-  })();
+  }
+
+  // Regular dice: black obsidian laced with gold, like cracked-and-mended pottery.
+  // Hunger dice: pale bone streaked with blood.
+  var STYLES = {
+    reg: {
+      stone: makeStone({ lo: [4, 4, 8], hi: [62, 52, 70], gamma: 1.3, veinPow: 11, vein: [255, 196, 84], vein2: [110, 8, 24], fleck: [110, 86, 36] }),
+      shade: "rgba(0, 0, 4, ", shadeMax: 0.55, lift: "rgba(255, 215, 150, ", liftMax: 0.12, spec: 0.5,
+      seam: "rgba(0, 0, 2, 0.95)", bevel: "232, 190, 120",
+      inlay: "rgba(232, 190, 120, 0.8)", stud: "rgba(255, 214, 140, 0.95)",
+      ink: "#f0d890", outline: "rgba(0, 0, 0, 0.85)", crit: "#62e07f", botch: "#ff5a5f"
+    },
+    hunger: {
+      stone: makeStone({ lo: [196, 183, 158], hi: [250, 246, 233], gamma: 0.9, veinPow: 6, vein: [-120, -215, -205], vein2: [-60, -75, -80], fleck: [-70, -72, -60] }),
+      shade: "rgba(52, 22, 16, ", shadeMax: 0.5, lift: "rgba(255, 255, 255, ", liftMax: 0.14, spec: 0.45,
+      seam: "rgba(60, 32, 24, 0.9)", bevel: "255, 250, 238",
+      inlay: "rgba(140, 22, 36, 0.8)", stud: "rgba(150, 24, 38, 0.95)",
+      ink: "#3a0c14", outline: "rgba(255, 250, 238, 0.75)", crit: "#13803d", botch: "#c4121f"
+    }
+  };
   var MARBLE_SHIFT = FACES.map(function () { return [(Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50]; });
+  var UNIT = 1 / 0.0046; // numeral-space pixels per die radius (see the numeral transform below)
 
   function drawTray() {
     var g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.7);
-    g.addColorStop(0, "#2c1f18"); g.addColorStop(1, "#0e0907");
+    g.addColorStop(0, "#5e2430"); g.addColorStop(1, "#1f0a10"); // burgundy velvet, so black and white dice both stand out
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "rgba(200, 164, 92, 0.16)"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(220, 180, 110, 0.22)"; ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, W - 20, H - 20);
   }
   function drawIdle() {
@@ -1768,11 +1807,15 @@
     if (raf) cancelAnimationFrame(raf);
     resultsEl.textContent = "";
     var lay = layout(n);
+    // Hunger dice are part of the roll, not extra: with Hunger 2 on a 5-dice roll,
+    // 3 are regular (black) and the last 2 are Hunger dice (white).
+    var hungerDice = Math.min(readHunger(), n);
     dice = lay.pts.map(function (p, i) {
       var value = rollD10();
       var sign1 = Math.random() < 0.5 ? -1 : 1, sign2 = Math.random() < 0.5 ? -1 : 1;
       return {
         value: value,
+        kind: i >= n - hungerDice ? "hunger" : "reg",
         rFinal: finalRotation(faceFor(value), (Math.random() - 0.5) * 1.0),
         ax1: randAxis(), a1: (7 + Math.random() * 4) * Math.PI * sign1,
         ax2: randAxis(), a2: (3 + Math.random() * 3) * Math.PI * sign2,
@@ -1803,6 +1846,7 @@
   function drawDie(d) {
     var M = d.M, S = d.s * (1 + 0.4 * d.h);
     var cx = d.gx, cy = d.gy - d.h * d.s * 1.1;
+    var st = STYLES[d.kind];
     FACES.forEach(function (f, fi) {
       var n = mvec(M, f.n);
       if (n[2] <= 0) return; // back-facing: hidden behind the die
@@ -1815,37 +1859,51 @@
         if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
       });
       ctx.closePath();
-      // Marble stone, stuck to the face (so it turns with the die), a different patch on each face.
+      // Stone, stuck to the face (so it turns with the die), a different patch on each face.
       var kt = S * MARBLE_UNITS / MARBLE_PX;
       ctx.save();
       ctx.clip();
       ctx.transform(r[0] * kt, -r[1] * kt, -u[0] * kt, u[1] * kt, cx + c[0] * S, cy - c[1] * S);
-      ctx.drawImage(marble, -MARBLE_PX / 2 + d.ox + MARBLE_SHIFT[fi][0], -MARBLE_PX / 2 + d.oy + MARBLE_SHIFT[fi][1]);
+      ctx.drawImage(st.stone, -MARBLE_PX / 2 + d.ox + MARBLE_SHIFT[fi][0], -MARBLE_PX / 2 + d.oy + MARBLE_SHIFT[fi][1]);
       ctx.restore();
       // Lighting on top of the stone: shade the faces turned away, brighten the ones facing the light.
-      ctx.fillStyle = "rgba(6, 0, 4, " + (0.6 * (1 - diff)).toFixed(3) + ")";
+      ctx.fillStyle = st.shade + (st.shadeMax * (1 - diff)).toFixed(3) + ")";
       ctx.fill();
-      ctx.fillStyle = "rgba(255, 150, 120, " + (0.1 * Math.pow(diff, 1.6)).toFixed(3) + ")";
+      ctx.fillStyle = st.lift + (st.liftMax * Math.pow(diff, 1.6)).toFixed(3) + ")";
       ctx.fill();
-      if (spec > 0.02) { ctx.fillStyle = "rgba(255, 236, 220, " + (spec * 0.4).toFixed(3) + ")"; ctx.fill(); }
-      // Edges: a dark seam with a thin gold-lit bevel along it.
+      if (spec > 0.02) { ctx.fillStyle = "rgba(255, 244, 232, " + (spec * st.spec).toFixed(3) + ")"; ctx.fill(); }
+      // Edges: a dark seam with a thin lit bevel along it.
       ctx.lineJoin = "round";
-      ctx.lineWidth = Math.max(1, S * 0.04); ctx.strokeStyle = "rgba(14, 1, 6, 0.9)"; ctx.stroke();
-      ctx.lineWidth = Math.max(0.6, S * 0.012); ctx.strokeStyle = "rgba(232, 190, 120, " + (0.25 + 0.3 * diff).toFixed(3) + ")"; ctx.stroke();
+      ctx.lineWidth = Math.max(1, S * 0.04); ctx.strokeStyle = st.seam; ctx.stroke();
+      ctx.lineWidth = Math.max(0.6, S * 0.012); ctx.strokeStyle = "rgba(" + st.bevel + ", " + (0.25 + 0.3 * diff).toFixed(3) + ")"; ctx.stroke();
+
+      // Inlay: a fine frame set into the face, with a stud at each corner, then the numeral.
+      var kx = S * 0.0046;
+      ctx.save();
+      ctx.transform(r[0] * kx, -r[1] * kx, -u[0] * kx, u[1] * kx, cx + c[0] * S, cy - c[1] * S);
+      ctx.beginPath();
+      f.local.forEach(function (p, i) {
+        var x = p[0] * UNIT * 0.8, y = p[1] * UNIT * 0.8;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+      ctx.lineWidth = 2.6; ctx.strokeStyle = st.inlay; ctx.stroke();
+      ctx.fillStyle = st.stud;
+      f.local.forEach(function (p) {
+        var x = p[0] * UNIT * 0.8, y = p[1] * UNIT * 0.8, a = 8;
+        ctx.beginPath(); ctx.moveTo(x, y - a); ctx.lineTo(x + a, y); ctx.lineTo(x, y + a); ctx.lineTo(x - a, y); ctx.closePath(); ctx.fill();
+      });
       if (n[2] > 0.2) {
-        var kx = S * 0.0046;
-        ctx.save();
-        ctx.transform(r[0] * kx, -r[1] * kx, -u[0] * kx, u[1] * kx, cx + c[0] * S, cy - c[1] * S);
         ctx.globalAlpha = Math.min(1, (n[2] - 0.18) / 0.35);
         ctx.font = '700 100px Georgia, "Palatino Linotype", serif';
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        // Gold numerals; the 10 face (critical) is green and the 1 face (botch) is red.
-        var ink = f.label === 0 ? "#6fe08a" : f.label === 1 ? "#ff5a5f" : "#f0d890";
-        ctx.lineWidth = 9; ctx.strokeStyle = "rgba(12, 0, 4, 0.85)";
+        // The 10 face (critical) is green and the 1 face (botch) is red; the rest take the die's own ink.
+        var ink = f.label === 0 ? st.crit : f.label === 1 ? st.botch : st.ink;
+        ctx.lineWidth = 9; ctx.strokeStyle = st.outline;
         ctx.strokeText(labelText(f), 0, 0);
         ctx.fillStyle = ink; ctx.fillText(labelText(f), 0, 0);
-        ctx.restore();
       }
+      ctx.restore();
     });
   }
 
@@ -1873,7 +1931,7 @@
     resultsEl.textContent = "";
     dice.forEach(function (d) {
       var chip = document.createElement("span");
-      chip.className = "dice-chip" + (d.value === 10 ? " ten" : d.value === 1 ? " one" : "");
+      chip.className = "dice-chip " + (d.kind === "hunger" ? "hun" : "reg") + (d.value === 10 ? " ten" : d.value === 1 ? " one" : "");
       chip.textContent = d.value;
       resultsEl.appendChild(chip);
     });
@@ -1881,6 +1939,7 @@
 
   function openModal() {
     modal.hidden = false;
+    readHunger();
     if (dice.length) { reduced = true; frame(performance.now()); } else { drawIdle(); }
     input.focus(); input.select();
   }
