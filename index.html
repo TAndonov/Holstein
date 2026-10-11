@@ -195,11 +195,8 @@
     font-family: var(--ui); font-weight: 600; font-variant-numeric: tabular-nums;
     background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
   }
-  .dice-chip.ten { border-color: var(--gold); color: var(--gold-bright); }
-  .dice-chip.one { border-color: var(--blood); color: var(--blood-strong); }
-  .dice-total { font-family: var(--ui); font-size: 0.8rem; color: var(--ink-muted); margin-left: 8px; }
-  .dice-total b { color: var(--ink); }
-  .dice-note { font-family: var(--ui); font-size: 0.7rem; color: var(--ink-muted); text-align: center; margin: 12px 0 0; }
+  .dice-chip.ten { border-color: var(--good); color: var(--good); background: color-mix(in srgb, var(--good) 16%, var(--surface-2)); }
+  .dice-chip.one { border-color: var(--blood-strong); color: var(--blood-strong); background: color-mix(in srgb, var(--blood) 14%, var(--surface-2)); }
 
   /* ---------- Gate / character picker ---------- */
   .wrap, .header-tools { display: none; }
@@ -683,7 +680,6 @@
       <button class="btn primary" id="diceRollBtn" type="button">Roll</button>
     </div>
     <div class="dice-results" id="diceResults" aria-live="polite"></div>
-    <p class="dice-note">Each die is picked with your browser's cryptographically secure random generator, so every face from 1 to 10 is equally likely. The tumbling is only for show.</p>
   </div>
 </div>
 
@@ -1667,7 +1663,6 @@
   var rollBtn = document.getElementById("diceRollBtn");
   var resultsEl = document.getElementById("diceResults");
   var W = 800, H = 440, MAX_DICE = 30, COUNT_KEY = "kindred-dice-count";
-  var BASE = [158, 24, 40];
   var LIGHT = vnorm([-0.4, 0.7, 0.6]);
   var HALF = vnorm([LIGHT[0], LIGHT[1], LIGHT[2] + 1]);
 
@@ -1691,6 +1686,46 @@
   function randAxis() {
     return vnorm([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5]);
   }
+
+  // The dice are carved from a procedurally generated blood-red marble: warped noise
+  // for the cloudy body, thin bright veins, and a scatter of gold flecks. Generated
+  // once when the page loads, then reused (shifted differently) on every face.
+  var MARBLE_PX = 320, MARBLE_UNITS = 3.2;
+  var marble = (function () {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = MARBLE_PX;
+    var g = cv.getContext("2d"), img = g.createImageData(MARBLE_PX, MARBLE_PX), px = img.data;
+    var seed = Math.random() * 1000;
+    function hash(x, y) { var h = Math.sin(x * 127.1 + y * 311.7 + seed) * 43758.5453; return h - Math.floor(h); }
+    function vnoise(x, y) {
+      var xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+      var sx = xf * xf * (3 - 2 * xf), sy = yf * yf * (3 - 2 * yf);
+      var a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+      return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+    }
+    function fbm(x, y) {
+      var v = 0, amp = 0.5;
+      for (var o = 0; o < 4; o++) { v += amp * vnoise(x, y); x *= 2.03; y *= 2.03; amp *= 0.5; }
+      return v;
+    }
+    for (var y = 0; y < MARBLE_PX; y++) {
+      for (var x = 0; x < MARBLE_PX; x++) {
+        var nx = x / MARBLE_PX * 3, ny = y / MARBLE_PX * 3;
+        var q = fbm(nx, ny);
+        var w = fbm(nx * 1.4 + q * 2.2 + 7.3, ny * 1.4 + q * 2.2 + 1.9);
+        var vein = Math.pow(1 - Math.abs(Math.sin((nx * 1.3 + w * 3.2) * Math.PI)), 6);
+        var t = clamp(w * 1.6 - 0.3, 0, 1);
+        var rC = 14 + 128 * Math.pow(t, 1.4), gC = 2 + 14 * t, bC = 6 + 22 * t;   // near-black stone shading into deep crimson
+        rC += vein * 150; gC += vein * 62; bC += vein * 26;                        // molten red-orange veins
+        if (hash(x * 0.37, y * 0.37 + 90) > 0.978) { rC += 90; gC += 70; bC += 25; } // gold flecks
+        var i = (y * MARBLE_PX + x) * 4;
+        px[i] = clamp(rC, 0, 255); px[i + 1] = clamp(gC, 0, 255); px[i + 2] = clamp(bC, 0, 255); px[i + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return cv;
+  })();
+  var MARBLE_SHIFT = FACES.map(function () { return [(Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50]; });
 
   function drawTray() {
     var g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.7);
@@ -1743,6 +1778,7 @@
         ax2: randAxis(), a2: (3 + Math.random() * 3) * Math.PI * sign2,
         sx: W * 0.5 + (Math.random() - 0.5) * W * 0.5, sy: H + lay.s * 2.2,
         ex: p.x, ey: p.y, s: lay.s,
+        ox: (Math.random() - 0.5) * 60, oy: (Math.random() - 0.5) * 60, // so no two dice carry the same stone pattern
         delay: i * 40 + Math.random() * 140, dur: 1250 + Math.random() * 450
       };
     });
@@ -1767,33 +1803,47 @@
   function drawDie(d) {
     var M = d.M, S = d.s * (1 + 0.4 * d.h);
     var cx = d.gx, cy = d.gy - d.h * d.s * 1.1;
-    FACES.forEach(function (f) {
+    FACES.forEach(function (f, fi) {
       var n = mvec(M, f.n);
       if (n[2] <= 0) return; // back-facing: hidden behind the die
       var diff = Math.max(0, vdot(n, LIGHT));
-      var spec = Math.pow(Math.max(0, vdot(n, HALF)), 28);
-      var k = 0.3 + 0.8 * diff;
+      var spec = Math.pow(Math.max(0, vdot(n, HALF)), 40);
+      var c = mvec(M, f.c), r = mvec(M, f.r), u = mvec(M, f.u);
       ctx.beginPath();
       f.verts.forEach(function (p, i) {
         var q = mvec(M, p), x = cx + q[0] * S, y = cy - q[1] * S;
         if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
       });
       ctx.closePath();
-      ctx.fillStyle = "rgb(" + Math.min(255, Math.round(BASE[0] * k)) + "," + Math.min(255, Math.round(BASE[1] * k)) + "," + Math.min(255, Math.round(BASE[2] * k)) + ")";
+      // Marble stone, stuck to the face (so it turns with the die), a different patch on each face.
+      var kt = S * MARBLE_UNITS / MARBLE_PX;
+      ctx.save();
+      ctx.clip();
+      ctx.transform(r[0] * kt, -r[1] * kt, -u[0] * kt, u[1] * kt, cx + c[0] * S, cy - c[1] * S);
+      ctx.drawImage(marble, -MARBLE_PX / 2 + d.ox + MARBLE_SHIFT[fi][0], -MARBLE_PX / 2 + d.oy + MARBLE_SHIFT[fi][1]);
+      ctx.restore();
+      // Lighting on top of the stone: shade the faces turned away, brighten the ones facing the light.
+      ctx.fillStyle = "rgba(6, 0, 4, " + (0.6 * (1 - diff)).toFixed(3) + ")";
       ctx.fill();
-      if (spec > 0.02) { ctx.fillStyle = "rgba(255, 236, 220, " + (spec * 0.55).toFixed(3) + ")"; ctx.fill(); }
-      ctx.lineWidth = Math.max(1, S * 0.035); ctx.lineJoin = "round";
-      ctx.strokeStyle = "rgba(28, 4, 8, 0.85)"; ctx.stroke();
+      ctx.fillStyle = "rgba(255, 150, 120, " + (0.1 * Math.pow(diff, 1.6)).toFixed(3) + ")";
+      ctx.fill();
+      if (spec > 0.02) { ctx.fillStyle = "rgba(255, 236, 220, " + (spec * 0.4).toFixed(3) + ")"; ctx.fill(); }
+      // Edges: a dark seam with a thin gold-lit bevel along it.
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(1, S * 0.04); ctx.strokeStyle = "rgba(14, 1, 6, 0.9)"; ctx.stroke();
+      ctx.lineWidth = Math.max(0.6, S * 0.012); ctx.strokeStyle = "rgba(232, 190, 120, " + (0.25 + 0.3 * diff).toFixed(3) + ")"; ctx.stroke();
       if (n[2] > 0.2) {
-        var c = mvec(M, f.c), r = mvec(M, f.r), u = mvec(M, f.u), kx = S * 0.0046;
+        var kx = S * 0.0046;
         ctx.save();
         ctx.transform(r[0] * kx, -r[1] * kx, -u[0] * kx, u[1] * kx, cx + c[0] * S, cy - c[1] * S);
         ctx.globalAlpha = Math.min(1, (n[2] - 0.18) / 0.35);
         ctx.font = '700 100px Georgia, "Palatino Linotype", serif';
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.lineWidth = 7; ctx.strokeStyle = "rgba(30, 4, 8, 0.6)";
+        // Gold numerals; the 10 face (critical) is green and the 1 face (botch) is red.
+        var ink = f.label === 0 ? "#6fe08a" : f.label === 1 ? "#ff5a5f" : "#f0d890";
+        ctx.lineWidth = 9; ctx.strokeStyle = "rgba(12, 0, 4, 0.85)";
         ctx.strokeText(labelText(f), 0, 0);
-        ctx.fillStyle = "#f0d890"; ctx.fillText(labelText(f), 0, 0);
+        ctx.fillStyle = ink; ctx.fillText(labelText(f), 0, 0);
         ctx.restore();
       }
     });
@@ -1821,19 +1871,12 @@
 
   function showResults() {
     resultsEl.textContent = "";
-    var total = 0;
     dice.forEach(function (d) {
-      total += d.value;
       var chip = document.createElement("span");
       chip.className = "dice-chip" + (d.value === 10 ? " ten" : d.value === 1 ? " one" : "");
       chip.textContent = d.value;
       resultsEl.appendChild(chip);
     });
-    var tot = document.createElement("span");
-    tot.className = "dice-total";
-    tot.innerHTML = "Total <b></b>";
-    tot.querySelector("b").textContent = total;
-    resultsEl.appendChild(tot);
   }
 
   function openModal() {
