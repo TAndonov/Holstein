@@ -143,6 +143,64 @@
   }
   .sync-switch button:hover { border-color: var(--blood); color: var(--ink); }
 
+  /* ---------- Dice roller ---------- */
+  .dice-fab {
+    position: fixed; right: 18px; bottom: 18px; z-index: 70; display: none;
+    width: 54px; height: 54px; padding: 0; border-radius: 50%; cursor: pointer;
+    align-items: center; justify-content: center;
+    background: var(--blood); color: #f3e4be; border: 1px solid var(--blood-strong);
+    box-shadow: 0 8px 22px -8px var(--shadow), 0 0 0 3px color-mix(in srgb, var(--gold) 28%, transparent);
+    transition: transform 0.08s, background 0.12s;
+  }
+  body.state-sheet .dice-fab { display: flex; }
+  .dice-fab:hover { background: var(--blood-strong); transform: translateY(-1px); }
+  .dice-fab:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .dice-fab svg { width: 30px; height: 30px; }
+
+  .dice-modal {
+    position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center;
+    padding: 16px; background: rgba(8, 5, 4, 0.62); backdrop-filter: blur(3px);
+  }
+  .dice-modal[hidden] { display: none; }
+  .dice-box {
+    width: min(100%, 860px); max-height: 100%; overflow: auto;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: 0 2px 0 var(--line-soft), 0 24px 50px -20px rgba(0, 0, 0, 0.7);
+    padding: 16px 20px 18px;
+  }
+  .dice-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .dice-head h2 { font-family: var(--serif); font-size: 1.3rem; margin: 0; color: var(--ink); }
+  .dice-close {
+    background: none; border: none; cursor: pointer; padding: 2px 10px;
+    font-size: 1.7rem; line-height: 1; color: var(--ink-muted);
+  }
+  .dice-close:hover { color: var(--blood-strong); }
+  #diceCanvas {
+    display: block; width: 100%; height: auto; aspect-ratio: 800 / 440;
+    border-radius: 3px; border: 1px solid var(--line); background: #140e0b;
+  }
+  .dice-controls { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .dice-count { display: inline-flex; align-items: center; gap: 8px; font-family: var(--ui); }
+  .dice-count .lbl { font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); margin-right: 2px; }
+  .dice-count input[type="number"] { width: 64px; text-align: center; padding: 8px 6px; }
+  .dice-step {
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer; padding: 0;
+    font-family: var(--ui); font-size: 1.1rem; line-height: 1;
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  }
+  .dice-step:hover { border-color: var(--blood); }
+  .dice-results { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 12px; min-height: 36px; }
+  .dice-chip {
+    min-width: 36px; text-align: center; padding: 5px 9px; border-radius: 4px;
+    font-family: var(--ui); font-weight: 600; font-variant-numeric: tabular-nums;
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  }
+  .dice-chip.ten { border-color: var(--gold); color: var(--gold-bright); }
+  .dice-chip.one { border-color: var(--blood); color: var(--blood-strong); }
+  .dice-total { font-family: var(--ui); font-size: 0.8rem; color: var(--ink-muted); margin-left: 8px; }
+  .dice-total b { color: var(--ink); }
+  .dice-note { font-family: var(--ui); font-size: 0.7rem; color: var(--ink-muted); text-align: center; margin: 12px 0 0; }
+
   /* ---------- Gate / character picker ---------- */
   .wrap, .header-tools { display: none; }
   body.state-sheet .wrap { display: block; }
@@ -413,7 +471,7 @@
   /* ---------- Print ---------- */
   @media print {
     body { background: #fff; color: #000; }
-    .rail, .actions, .header-tools, .toast, .sec-instruct, .stat .desc, .rp-intro { display: none !important; }
+    .rail, .actions, .header-tools, .toast, .dice-fab, .dice-modal, .sec-instruct, .stat .desc, .rp-intro { display: none !important; }
     .wrap { max-width: 100%; padding: 0 6px 10px; }
     section.card {
       box-shadow: none; border: 1px solid #999; margin: 10px 0; padding: 14px 14px 16px;
@@ -600,6 +658,34 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<button class="dice-fab" id="diceFab" type="button" title="Roll d10 dice" aria-label="Roll d10 dice">
+  <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+    <path d="M16 2.5 27 13 16 29.5 5 13Z"/>
+    <path d="M5 13h22M16 2.5v27M10.5 7.8 16 13l5.5-5.2" opacity="0.7"/>
+  </svg>
+</button>
+
+<div class="dice-modal" id="diceModal" role="dialog" aria-modal="true" aria-labelledby="diceTitle" hidden>
+  <div class="dice-box">
+    <div class="dice-head">
+      <h2 id="diceTitle">Dice Tray</h2>
+      <button class="dice-close" id="diceClose" type="button" aria-label="Close dice tray">×</button>
+    </div>
+    <canvas id="diceCanvas" width="800" height="440"></canvas>
+    <div class="dice-controls">
+      <div class="dice-count">
+        <span class="lbl">Dice</span>
+        <button class="dice-step" id="diceMinus" type="button" aria-label="Fewer dice">−</button>
+        <input type="number" id="diceCount" min="1" max="30" step="1" value="5" inputmode="numeric">
+        <button class="dice-step" id="dicePlus" type="button" aria-label="More dice">+</button>
+      </div>
+      <button class="btn primary" id="diceRollBtn" type="button">Roll</button>
+    </div>
+    <div class="dice-results" id="diceResults" aria-live="polite"></div>
+    <p class="dice-note">Each die is picked with your browser's cryptographically secure random generator, so every face from 1 to 10 is equally likely. The tumbling is only for show.</p>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -1477,6 +1563,298 @@
   window.KindredApplyData = applyData;
   window.KindredToast = toast;
 
+})();
+</script>
+
+<script>
+// ---- Dice tray: animated d10 roller ----
+(function () {
+  "use strict";
+
+  // BEGIN pure-math (no DOM — extracted and checked on its own)
+
+  // The result of every die is decided here, up front, by the browser's
+  // cryptographically secure generator (Web Crypto getRandomValues). Values at
+  // the very top of the 32-bit range are thrown away and redrawn so that no face
+  // is favoured (plain "% 10" on a random 32-bit number would be slightly biased).
+  function randomInt(max) {
+    var c = window.crypto || window.msCrypto;
+    if (!c || !c.getRandomValues) return Math.floor(Math.random() * max);
+    var range = 4294967296;
+    var limit = range - (range % max);
+    var buf = new Uint32Array(1);
+    do { c.getRandomValues(buf); } while (buf[0] >= limit);
+    return buf[0] % max;
+  }
+  function rollD10() { return randomInt(10) + 1; }
+
+  function vadd(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+  function vsub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+  function vdot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+  function vcross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+  function vscale(a, k) { return [a[0] * k, a[1] * k, a[2] * k]; }
+  function vnorm(a) { var l = Math.sqrt(vdot(a, a)); return [a[0] / l, a[1] / l, a[2] / l]; }
+  // 3x3 matrices as row-major arrays of 9
+  function mvec(M, v) {
+    return [M[0] * v[0] + M[1] * v[1] + M[2] * v[2], M[3] * v[0] + M[4] * v[1] + M[5] * v[2], M[6] * v[0] + M[7] * v[1] + M[8] * v[2]];
+  }
+  function mmul(A, B) {
+    var R = [];
+    for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) R.push(A[i * 3] * B[j] + A[i * 3 + 1] * B[3 + j] + A[i * 3 + 2] * B[6 + j]);
+    return R;
+  }
+  function fromCols(a, b, c) { return [a[0], b[0], c[0], a[1], b[1], c[1], a[2], b[2], c[2]]; }
+  function transpose(M) { return [M[0], M[3], M[6], M[1], M[4], M[7], M[2], M[5], M[8]]; }
+  function rotAxis(ax, ang) {
+    var x = ax[0], y = ax[1], z = ax[2], c = Math.cos(ang), s = Math.sin(ang), t = 1 - c;
+    return [t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+            t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+            t * x * z - s * y, t * y * z + s * x, t * z * z + c];
+  }
+
+  // A d10 is a pentagonal trapezohedron: two apexes and a zig-zag equator of ten
+  // vertices, giving ten kite-shaped faces. The equator height Z0 is the value that
+  // makes every kite exactly flat when the apexes sit at z = ±1.
+  var C36 = Math.cos(Math.PI / 5);
+  var Z0 = (1 - C36) / (1 + C36);
+  var T = [0, 0, 1], B = [0, 0, -1], U = [], L = [], k;
+  for (k = 0; k < 5; k++) {
+    var a = k * 2 * Math.PI / 5, b = a + Math.PI / 5;
+    U.push([Math.cos(a), Math.sin(a), Z0]);
+    L.push([Math.cos(b), Math.sin(b), -Z0]);
+  }
+  var FACES = [];
+  for (k = 0; k < 5; k++) FACES.push({ verts: [T, U[k], L[k], U[(k + 1) % 5]] });
+  for (k = 0; k < 5; k++) FACES.push({ verts: [B, L[k], U[(k + 1) % 5], L[(k + 1) % 5]] });
+  FACES.forEach(function (f) {
+    var v = f.verts;
+    var n = vnorm(vcross(vsub(v[2], v[0]), vsub(v[3], v[1])));
+    var c = vscale([v[0][0] + v[1][0] + v[2][0] + v[3][0], v[0][1] + v[1][1] + v[2][1] + v[3][1], v[0][2] + v[1][2] + v[2][2] + v[3][2]], 0.25);
+    if (vdot(n, c) < 0) n = vscale(n, -1);
+    var u = vsub(v[0], v[2]);
+    u = vnorm(vsub(u, vscale(n, vdot(u, n))));
+    f.n = n; f.c = c; f.u = u; f.r = vcross(u, n); // numeral reads along r, upright along u
+  });
+  // Faces are numbered 0-9 ("0" is printed as 10) so opposite faces add up to 9, like a real d10.
+  var UPPER_LABELS = [0, 2, 4, 6, 8];
+  for (k = 0; k < 5; k++) {
+    FACES[k].label = UPPER_LABELS[k];
+    for (var j = 5; j < 10; j++) if (vdot(FACES[j].n, FACES[k].n) < -0.99) FACES[j].label = 9 - UPPER_LABELS[k];
+  }
+  var FACE_FOR_LABEL = {};
+  FACES.forEach(function (f) { FACE_FOR_LABEL[f.label] = f; });
+  function faceFor(value) { return FACE_FOR_LABEL[value === 10 ? 0 : value]; }
+  function labelText(f) { return f.label === 0 ? "10" : String(f.label); }
+
+  // Orientation that leaves `face` toward the viewer, tilted like a table seen from
+  // slightly above, numeral upright, turned by `yaw` radians for a natural look.
+  var TILT = 22 * Math.PI / 180;
+  function finalRotation(face, yaw) {
+    var N = [0, Math.sin(TILT), Math.cos(TILT)];
+    var U0 = [0, Math.cos(TILT), -Math.sin(TILT)];
+    var Up = vadd(vscale(U0, Math.cos(yaw)), vscale(vcross(N, U0), Math.sin(yaw)));
+    var local = fromCols(face.u, vcross(face.n, face.u), face.n);
+    return mmul(fromCols(Up, vcross(N, Up), N), transpose(local));
+  }
+  // END pure-math
+
+  var fab = document.getElementById("diceFab");
+  var modal = document.getElementById("diceModal");
+  var canvas = document.getElementById("diceCanvas");
+  if (!fab || !modal || !canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext("2d");
+  var input = document.getElementById("diceCount");
+  var rollBtn = document.getElementById("diceRollBtn");
+  var resultsEl = document.getElementById("diceResults");
+  var W = 800, H = 440, MAX_DICE = 30, COUNT_KEY = "kindred-dice-count";
+  var BASE = [158, 24, 40];
+  var LIGHT = vnorm([-0.4, 0.7, 0.6]);
+  var HALF = vnorm([LIGHT[0], LIGHT[1], LIGHT[2] + 1]);
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  var dice = [], raf = 0, t0 = 0, reduced = false;
+
+  try {
+    var savedCount = parseInt(localStorage.getItem(COUNT_KEY), 10);
+    if (savedCount >= 1 && savedCount <= MAX_DICE) input.value = savedCount;
+  } catch (e) {}
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function getCount() {
+    var n = parseInt(input.value, 10);
+    if (isNaN(n)) n = 1;
+    return clamp(n, 1, MAX_DICE);
+  }
+  function randAxis() {
+    return vnorm([Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5]);
+  }
+
+  function drawTray() {
+    var g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.7);
+    g.addColorStop(0, "#2c1f18"); g.addColorStop(1, "#0e0907");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(200, 164, 92, 0.16)"; ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, W - 20, H - 20);
+  }
+  function drawIdle() {
+    drawTray();
+    ctx.fillStyle = "rgba(236, 225, 205, 0.55)";
+    ctx.font = "italic 22px Georgia, serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Choose how many dice, then roll.", W / 2, H / 2);
+  }
+
+  function layout(n) {
+    var m = 34, aw = W - 2 * m, ah = H - 2 * m;
+    var cols = Math.max(1, Math.ceil(Math.sqrt(n * aw / ah)));
+    var rows = Math.ceil(n / cols);
+    var cw = aw / cols, ch = ah / rows, cell = Math.min(cw, ch);
+    var s = Math.min(cell * 0.4, 78);
+    var slack = Math.max(0, cell / 2 - s * 1.02) * 0.8;
+    var pts = [];
+    for (var i = 0; i < n; i++) {
+      var r = Math.floor(i / cols), c = i % cols;
+      var inRow = (r === rows - 1) ? n - cols * (rows - 1) : cols;
+      var x0 = m + (aw - inRow * cw) / 2;
+      pts.push({
+        x: x0 + cw * (c + 0.5) + (Math.random() - 0.5) * 2 * slack,
+        y: m + ch * (r + 0.5) + (Math.random() - 0.5) * 2 * slack
+      });
+    }
+    return { pts: pts, s: s };
+  }
+
+  function startRoll() {
+    var n = getCount();
+    input.value = n;
+    try { localStorage.setItem(COUNT_KEY, String(n)); } catch (e) {}
+    if (raf) cancelAnimationFrame(raf);
+    resultsEl.textContent = "";
+    var lay = layout(n);
+    dice = lay.pts.map(function (p, i) {
+      var value = rollD10();
+      var sign1 = Math.random() < 0.5 ? -1 : 1, sign2 = Math.random() < 0.5 ? -1 : 1;
+      return {
+        value: value,
+        rFinal: finalRotation(faceFor(value), (Math.random() - 0.5) * 1.0),
+        ax1: randAxis(), a1: (7 + Math.random() * 4) * Math.PI * sign1,
+        ax2: randAxis(), a2: (3 + Math.random() * 3) * Math.PI * sign2,
+        sx: W * 0.5 + (Math.random() - 0.5) * W * 0.5, sy: H + lay.s * 2.2,
+        ex: p.x, ey: p.y, s: lay.s,
+        delay: i * 40 + Math.random() * 140, dur: 1250 + Math.random() * 450
+      };
+    });
+    reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    t0 = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+
+  function shadow(d) {
+    var rad = d.s * (1.05 - 0.2 * d.h);
+    ctx.save();
+    ctx.translate(d.gx + d.s * 0.12 + d.h * d.s * 0.5, d.gy + d.s * 0.7);
+    ctx.scale(1, 0.34);
+    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, rad);
+    g.addColorStop(0, "rgba(0, 0, 0, " + (0.6 * (1 - 0.6 * d.h)).toFixed(3) + ")");
+    g.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawDie(d) {
+    var M = d.M, S = d.s * (1 + 0.4 * d.h);
+    var cx = d.gx, cy = d.gy - d.h * d.s * 1.1;
+    FACES.forEach(function (f) {
+      var n = mvec(M, f.n);
+      if (n[2] <= 0) return; // back-facing: hidden behind the die
+      var diff = Math.max(0, vdot(n, LIGHT));
+      var spec = Math.pow(Math.max(0, vdot(n, HALF)), 28);
+      var k = 0.3 + 0.8 * diff;
+      ctx.beginPath();
+      f.verts.forEach(function (p, i) {
+        var q = mvec(M, p), x = cx + q[0] * S, y = cy - q[1] * S;
+        if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = "rgb(" + Math.min(255, Math.round(BASE[0] * k)) + "," + Math.min(255, Math.round(BASE[1] * k)) + "," + Math.min(255, Math.round(BASE[2] * k)) + ")";
+      ctx.fill();
+      if (spec > 0.02) { ctx.fillStyle = "rgba(255, 236, 220, " + (spec * 0.55).toFixed(3) + ")"; ctx.fill(); }
+      ctx.lineWidth = Math.max(1, S * 0.035); ctx.lineJoin = "round";
+      ctx.strokeStyle = "rgba(28, 4, 8, 0.85)"; ctx.stroke();
+      if (n[2] > 0.2) {
+        var c = mvec(M, f.c), r = mvec(M, f.r), u = mvec(M, f.u), kx = S * 0.0046;
+        ctx.save();
+        ctx.transform(r[0] * kx, -r[1] * kx, -u[0] * kx, u[1] * kx, cx + c[0] * S, cy - c[1] * S);
+        ctx.globalAlpha = Math.min(1, (n[2] - 0.18) / 0.35);
+        ctx.font = '700 100px Georgia, "Palatino Linotype", serif';
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.lineWidth = 7; ctx.strokeStyle = "rgba(30, 4, 8, 0.6)";
+        ctx.strokeText(labelText(f), 0, 0);
+        ctx.fillStyle = "#f0d890"; ctx.fillText(labelText(f), 0, 0);
+        ctx.restore();
+      }
+    });
+  }
+
+  function frame(now) {
+    var elapsed = now - t0, done = true;
+    drawTray();
+    dice.forEach(function (d) {
+      var t = reduced ? 1 : clamp((elapsed - d.delay) / d.dur, 0, 1);
+      if (t < 1) done = false;
+      var e = 1 - Math.pow(1 - t, 3), rem = Math.pow(1 - t, 2);
+      d.started = reduced || elapsed >= d.delay;
+      d.gx = d.sx + (d.ex - d.sx) * e;
+      d.gy = d.sy + (d.ey - d.sy) * e;
+      d.h = rem * Math.abs(Math.cos(2.5 * Math.PI * t)); // a few bounces that die away
+      d.M = mmul(mmul(rotAxis(d.ax1, d.a1 * rem), rotAxis(d.ax2, d.a2 * rem)), d.rFinal);
+    });
+    dice.slice().sort(function (a, b) { return a.gy - b.gy; }).forEach(function (d) {
+      if (!d.started) return;
+      shadow(d); drawDie(d);
+    });
+    if (done) { raf = 0; showResults(); } else { raf = requestAnimationFrame(frame); }
+  }
+
+  function showResults() {
+    resultsEl.textContent = "";
+    var total = 0;
+    dice.forEach(function (d) {
+      total += d.value;
+      var chip = document.createElement("span");
+      chip.className = "dice-chip" + (d.value === 10 ? " ten" : d.value === 1 ? " one" : "");
+      chip.textContent = d.value;
+      resultsEl.appendChild(chip);
+    });
+    var tot = document.createElement("span");
+    tot.className = "dice-total";
+    tot.innerHTML = "Total <b></b>";
+    tot.querySelector("b").textContent = total;
+    resultsEl.appendChild(tot);
+  }
+
+  function openModal() {
+    modal.hidden = false;
+    if (dice.length) { reduced = true; frame(performance.now()); } else { drawIdle(); }
+    input.focus(); input.select();
+  }
+  function closeModal() {
+    modal.hidden = true;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    fab.focus();
+  }
+
+  fab.addEventListener("click", openModal);
+  document.getElementById("diceClose").addEventListener("click", closeModal);
+  modal.addEventListener("click", function (ev) { if (ev.target === modal) closeModal(); });
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && !modal.hidden) closeModal(); });
+  rollBtn.addEventListener("click", startRoll);
+  input.addEventListener("keydown", function (ev) { if (ev.key === "Enter") startRoll(); });
+  document.getElementById("diceMinus").addEventListener("click", function () { input.value = clamp(getCount() - 1, 1, MAX_DICE); });
+  document.getElementById("dicePlus").addEventListener("click", function () { input.value = clamp(getCount() + 1, 1, MAX_DICE); });
 })();
 </script>
 
