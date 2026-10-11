@@ -83,7 +83,7 @@
   /* ---------- Header ---------- */
   header.hero {
     text-align: center;
-    padding: 60px 16px 34px;
+    padding: 44px 16px 34px;
     position: relative;
   }
   .gilt-rule {
@@ -206,9 +206,9 @@
   .dice-chip.hun.one { color: #b3121f; border-color: #c8283a; }
 
   /* ---------- Gate / character picker ---------- */
-  .wrap, .header-tools { display: none; }
+  .wrap, .topbar { display: none; }
   body.state-sheet .wrap { display: block; }
-  body.state-sheet .header-tools { display: flex; }
+  body.state-sheet .topbar { display: block; }
 
   .gate, .picker {
     position: fixed; inset: 0; z-index: 200;
@@ -253,7 +253,7 @@
 
   /* ---------- Sticky budget rail ---------- */
   .rail {
-    position: sticky; top: 0; z-index: 50;
+    position: sticky; top: var(--topbar-h, 0px); z-index: 50;
     margin: 8px 0 30px;
     background: color-mix(in srgb, var(--surface) 92%, transparent);
     backdrop-filter: blur(8px);
@@ -295,6 +295,7 @@
     border-radius: 4px;
     padding: 26px 26px 30px;
     margin: 22px 0;
+    scroll-margin-top: calc(var(--topbar-h, 0px) + 150px); /* clear the sticky menu and budget rail when jumping to a section */
     box-shadow: 0 2px 0 var(--line-soft), 0 14px 30px -22px var(--shadow);
   }
   .sec-head { margin: 0 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -458,7 +459,33 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  .header-tools { position: fixed; top: 14px; right: 16px; z-index: 60; display: flex; gap: 8px; }
+  /* ---------- Top menu ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 60;
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 22px -14px var(--shadow);
+  }
+  .topbar-in {
+    max-width: 900px; margin: 0 auto; padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px;
+  }
+  .tabs { display: flex; gap: 2px; }
+  .tab {
+    font-family: var(--ui); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase;
+    background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0;
+    color: var(--ink-muted); padding: 14px 14px 11px; cursor: pointer;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold-bright); }
+  .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .header-tools { display: flex; gap: 8px; padding: 6px 0; }
+  body.view-notes #descToggle { display: none; }
+
+  /* ---------- Notes page ---------- */
+  .notes-card { margin-top: 28px; }
+  .notes-area { min-height: 62vh; font-size: 1rem; line-height: 1.65; }
   .theme-toggle {
     font-family: var(--ui); font-size: 0.72rem; letter-spacing: 0.08em;
     background: var(--surface); border: 1px solid var(--line); color: var(--ink-muted);
@@ -475,7 +502,7 @@
   /* ---------- Print ---------- */
   @media print {
     body { background: #fff; color: #000; }
-    .rail, .actions, .header-tools, .toast, .dice-fab, .dice-modal, .sec-instruct, .stat .desc, .rp-intro { display: none !important; }
+    .rail, .actions, .topbar, .toast, .dice-fab, .dice-modal, .sec-instruct, .stat .desc, .rp-intro { display: none !important; }
     .wrap { max-width: 100%; padding: 0 6px 10px; }
     section.card {
       box-shadow: none; border: 1px solid #999; margin: 10px 0; padding: 14px 14px 16px;
@@ -510,13 +537,29 @@
   </div>
 </div>
 
-<div class="header-tools">
-  <button class="theme-toggle" id="descToggle" type="button">Show details</button>
-  <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
-</div>
+<nav class="topbar" id="topbar" aria-label="Pages">
+  <div class="topbar-in">
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true">Character Sheet</button>
+      <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
+    </div>
+    <div class="header-tools">
+      <button class="theme-toggle" id="descToggle" type="button">Show details</button>
+      <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
+    </div>
+  </div>
+</nav>
 
 <div class="wrap">
   <div class="gilt-rule"></div>
+  <div id="notesPage" hidden>
+    <section class="card notes-card">
+      <div class="sec-head"><span class="sec-num">Chronicle</span><h2>Session Notes</h2></div>
+      <p class="sec-instruct">Jot down anything from the game: names, clues, debts, plans. Notes save with this character and sync across your devices.</p>
+      <textarea id="f_notes" class="notes-area" maxlength="200000" placeholder="Start writing…"></textarea>
+    </section>
+  </div>
+  <div id="sheetPage">
   <header class="hero">
     <p class="eyebrow">Vampire · The Dark Ages · Holstein, 13th Century</p>
     <h1>Kindred <span class="amp">of</span> Holstein</h1>
@@ -659,6 +702,7 @@
     <button class="btn" id="btnReset" type="button">Reset</button>
   </div>
   <footer class="foot">Your work saves automatically in this browser. Import a saved .json by dropping it onto this page.</footer>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1296,7 +1340,7 @@
 
   // ---- Persistence ----
   var textIds = ["f_name","f_player","f_concept","f_sire","f_attach","f_desire","f_desire_custom","f_clan",
-    "spec_ab_0","spec_txt_0","spec_ab_1","spec_txt_1","q_true","q_false","f_path_name"];
+    "spec_ab_0","spec_txt_0","spec_ab_1","spec_txt_1","q_true","q_false","f_path_name","f_notes"];
   QUESTIONS.forEach(function (q) { textIds.push(q.id); });
 
   function gather() {
@@ -1499,6 +1543,12 @@
     });
     if (f.q_true) { L.push("  Rumour that is true:"); L.push("    " + f.q_true); }
     if (f.q_false) { L.push("  Rumour that is false:"); L.push("    " + f.q_false); }
+
+    if (f.f_notes && f.f_notes.trim()) {
+      L.push("");
+      L.push("-- NOTES --");
+      L.push(f.f_notes);
+    }
 
     return L.join("\n");
   }
@@ -1957,6 +2007,44 @@
   input.addEventListener("keydown", function (ev) { if (ev.key === "Enter") startRoll(); });
   document.getElementById("diceMinus").addEventListener("click", function () { input.value = clamp(getCount() - 1, 1, MAX_DICE); });
   document.getElementById("dicePlus").addEventListener("click", function () { input.value = clamp(getCount() + 1, 1, MAX_DICE); });
+})();
+</script>
+
+<script>
+// ---- Top menu: Character Sheet / Notes ----
+(function () {
+  "use strict";
+  var bar = document.getElementById("topbar");
+  var sheetPage = document.getElementById("sheetPage");
+  var notesPage = document.getElementById("notesPage");
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".topbar .tab"));
+  if (!bar || !sheetPage || !notesPage) return;
+
+  function setView(view) {
+    var notes = view === "notes";
+    document.body.classList.toggle("view-notes", notes);
+    sheetPage.hidden = notes;
+    notesPage.hidden = !notes;
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === (notes ? "notes" : "sheet"))); });
+  }
+  function viewFromHash() { return location.hash === "#notes" ? "notes" : "sheet"; }
+
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      setView(t.dataset.view);
+      window.scrollTo(0, 0);
+      // Keep the page in the address bar so a refresh stays on Notes.
+      try { history.replaceState(null, "", t.dataset.view === "notes" ? "#notes" : location.pathname + location.search); } catch (e) {}
+    });
+  });
+  window.addEventListener("hashchange", function () { setView(viewFromHash()); });
+  setView(viewFromHash());
+
+  // The budget rail sticks just under the menu, so it needs to know the menu's height.
+  function syncHeight() { document.documentElement.style.setProperty("--topbar-h", bar.offsetHeight + "px"); }
+  if (window.ResizeObserver) new ResizeObserver(syncHeight).observe(bar);
+  window.addEventListener("resize", syncHeight);
+  syncHeight();
 })();
 </script>
 
