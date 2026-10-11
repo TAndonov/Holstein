@@ -481,7 +481,59 @@
   .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold-bright); }
   .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   .header-tools { display: flex; gap: 8px; padding: 6px 0; }
-  body.view-notes #descToggle { display: none; }
+  body.view-notes #descToggle, body.view-health #descToggle { display: none; }
+
+  /* ---------- Health page: the pin doll ---------- */
+  .health-card { margin-top: 28px; }
+  .health-grid { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px 40px; align-items: start; justify-content: center; }
+  @media (max-width: 700px) {
+    .health-grid { grid-template-columns: 1fr; }
+    .health-side { order: -1; }
+    .health-doll { width: 100%; max-width: 320px; margin: 0 auto; }
+  }
+  .health-doll svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+  #dollSvg .part { cursor: crosshair; }
+  #dollSvg.full .part { cursor: not-allowed; }
+  #dollSvg .part:hover .cloth { filter: brightness(1.07); }
+  #dollSvg .cloth { fill: url(#burlap); stroke: #3b2413; stroke-width: 3; }
+  #dollSvg .weave { fill: url(#weave); stroke: none; pointer-events: none; }
+  #dollSvg .seam {
+    fill: none; stroke: #5b3a1d; stroke-width: 2; stroke-dasharray: 7 6; stroke-linecap: round; pointer-events: none;
+    transform-box: fill-box; transform-origin: center; transform: scale(0.9); /* stitched seam set just inside the edge */
+  }
+  .doll-deco circle { fill: #7a5230; stroke: #3b2413; stroke-width: 2; }
+  .doll-deco .eye { fill: #15100d; stroke: #3b2413; }
+  .doll-deco .eye-shine { fill: #fff; stroke: none; opacity: 0.75; }
+  .doll-deco .mouth { fill: none; stroke: #3b2413; stroke-width: 2.6; stroke-linecap: round; }
+  #dollSvg .pin { cursor: pointer; }
+  .needle-edge { stroke: #4c5660; stroke-width: 3.6; stroke-linecap: round; }
+  .needle { stroke: #e9eff4; stroke-width: 2; stroke-linecap: round; }
+  .pin .head, .tray-pin .head { fill: url(#pinHead); stroke: #4a0610; stroke-width: 1; }
+  .shine { fill: rgba(255, 255, 255, 0.7); }
+  .hole { fill: #2b170a; opacity: 0.7; }
+  .hit { fill: transparent; }
+  #dollSvg .pin:hover .head { filter: brightness(1.25); }
+  #dollSvg .pin:hover .needle { stroke: #fff; }
+  .pin-body.new { animation: pin-in 0.28s ease-out; }
+  @keyframes pin-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .pin-body.new { animation: none; } }
+
+  .health-side { background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 18px 18px 16px; }
+  .dmg-count { display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
+  .dmg-count .lbl { font-family: var(--ui); font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); }
+  .dmg-count .num { font-family: var(--ui); font-variant-numeric: tabular-nums; }
+  .dmg-count b { font-size: 2.8rem; line-height: 1.1; font-weight: 600; color: var(--blood-strong); }
+  .dmg-count small { font-size: 1.1rem; color: var(--ink-muted); }
+  .pin-tray { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px 4px; justify-items: center; margin: 4px 0 10px; }
+  .tray-pin { width: 100%; max-width: 30px; height: auto; }
+  .tray-pin.used { opacity: 0.16; filter: grayscale(1); }
+  .pins-left { text-align: center; font-family: var(--ui); font-size: 0.8rem; color: var(--ink-muted); margin: 0 0 14px; }
+  .pins-left b { color: var(--ink); }
+  .dmg-regions { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px dotted var(--line-soft); font-family: var(--ui); font-size: 0.88rem; }
+  .dmg-regions li { display: flex; justify-content: space-between; padding: 3px 2px; color: var(--ink-soft); }
+  .dmg-regions li b { color: var(--blood-strong); }
+  .dmg-regions li.none { justify-content: center; font-style: italic; color: var(--ink-muted); }
+  .rail-chip.dmg .num { color: var(--blood-strong); }
 
   /* ---------- Notes page ---------- */
   .notes-card { margin-top: 28px; }
@@ -541,6 +593,7 @@
   <div class="topbar-in">
     <div class="tabs" role="tablist">
       <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true">Character Sheet</button>
+      <button class="tab" id="tabHealth" type="button" role="tab" data-view="health" aria-selected="false">Health</button>
       <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
     </div>
     <div class="header-tools">
@@ -552,6 +605,55 @@
 
 <div class="wrap">
   <div class="gilt-rule"></div>
+  <div id="healthPage" hidden>
+    <section class="card health-card">
+      <div class="sec-head"><span class="sec-num">Wounds</span><h2>Health</h2></div>
+      <p class="sec-instruct">Click the doll to push in a pin: each pin is 1 damage, up to 12. Click a pin to pull it out and heal 1.</p>
+      <div class="health-grid">
+        <div class="health-doll">
+          <svg id="dollSvg" viewBox="0 0 320 560" role="img" aria-label="Cloth doll. Click a body part to add a pin, click a pin to remove it.">
+            <defs>
+              <radialGradient id="burlap" cx="40%" cy="30%" r="85%"><stop offset="0" stop-color="#dcc28f"/><stop offset="1" stop-color="#ad8a58"/></radialGradient>
+              <pattern id="weave" width="6" height="6" patternUnits="userSpaceOnUse">
+                <path d="M0 0H6M0 3H6" stroke="rgba(90,60,30,0.2)" stroke-width="1"/>
+                <path d="M0 0V6M3 0V6" stroke="rgba(90,60,30,0.15)" stroke-width="1"/>
+              </pattern>
+              <radialGradient id="pinHead" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#ff9a9a"/><stop offset="0.45" stop-color="#d1202f"/><stop offset="1" stop-color="#650610"/></radialGradient>
+              <circle id="s-head" cx="160" cy="72" r="54"/>
+              <rect id="s-chest" x="100" y="122" width="120" height="140" rx="34"/>
+              <rect id="s-abdomen" x="108" y="256" width="104" height="86" rx="26"/>
+              <rect id="s-armR" x="62" y="140" width="46" height="170" rx="23" transform="rotate(14 85 140)"/>
+              <rect id="s-armL" x="212" y="140" width="46" height="170" rx="23" transform="rotate(-14 235 140)"/>
+              <rect id="s-legR" x="104" y="326" width="54" height="204" rx="27"/>
+              <rect id="s-legL" x="162" y="326" width="54" height="204" rx="27"/>
+            </defs>
+            <!-- limbs first so the torso and head overlap their tops; viewer's left is the doll's right -->
+            <g class="part" data-region="armR"><use href="#s-armR" class="cloth"/><use href="#s-armR" class="weave"/><use href="#s-armR" class="seam"/></g>
+            <g class="part" data-region="armL"><use href="#s-armL" class="cloth"/><use href="#s-armL" class="weave"/><use href="#s-armL" class="seam"/></g>
+            <g class="part" data-region="legR"><use href="#s-legR" class="cloth"/><use href="#s-legR" class="weave"/><use href="#s-legR" class="seam"/></g>
+            <g class="part" data-region="legL"><use href="#s-legL" class="cloth"/><use href="#s-legL" class="weave"/><use href="#s-legL" class="seam"/></g>
+            <g class="part" data-region="abdomen"><use href="#s-abdomen" class="cloth"/><use href="#s-abdomen" class="weave"/><use href="#s-abdomen" class="seam"/></g>
+            <g class="part" data-region="chest"><use href="#s-chest" class="cloth"/><use href="#s-chest" class="weave"/><use href="#s-chest" class="seam"/></g>
+            <g class="part" data-region="head"><use href="#s-head" class="cloth"/><use href="#s-head" class="weave"/><use href="#s-head" class="seam"/></g>
+            <g class="doll-deco" pointer-events="none">
+              <circle cx="160" cy="168" r="7"/><circle cx="160" cy="206" r="7"/>
+              <circle class="eye" cx="138" cy="64" r="9"/><circle class="eye" cx="182" cy="64" r="9"/>
+              <circle class="eye-shine" cx="135" cy="61" r="2.6"/><circle class="eye-shine" cx="179" cy="61" r="2.6"/>
+              <path class="mouth" d="M136 98 Q160 112 184 98"/>
+              <path class="mouth" d="M144 96 v8 M154 100 v8 M166 100 v8 M176 96 v8"/>
+            </g>
+            <g id="pinLayer"></g>
+          </svg>
+        </div>
+        <aside class="health-side">
+          <div class="dmg-count"><span class="lbl">Damage</span><span class="num"><b id="dmgNum">0</b><small> / 12</small></span></div>
+          <div class="pin-tray" id="pinTray" aria-label="Pins"></div>
+          <p class="pins-left">Pins left <b id="pinsLeft">12</b></p>
+          <ul class="dmg-regions" id="dmgRegions"></ul>
+        </aside>
+      </div>
+    </section>
+  </div>
   <div id="notesPage" hidden>
     <section class="card notes-card">
       <div class="sec-head"><span class="sec-num">Chronicle</span><h2>Session Notes</h2></div>
@@ -581,6 +683,7 @@
     <div class="rail-chip vital" data-vital="willpower" data-target="sec-vitals"><span class="lbl">Willpower</span><span class="num">0</span></div>
     <div class="rail-chip vital" data-vital="hunger" data-target="sec-vitals"><span class="lbl">Hunger</span><span class="num">0</span></div>
     <div class="rail-chip vital" data-vital="humanity" data-target="sec-vitals"><span class="lbl">Humanity</span><span class="num">7</span></div>
+    <div class="rail-chip vital dmg" data-vital="health" data-tab="tabHealth"><span class="lbl">Damage</span><span class="num">0<small> / 12</small></span></div>
     <div class="rail-chip vital" data-vital="path" data-target="sec-vitals"><span class="lbl" id="pathChipLbl">Clan Path</span><span class="num">0</span></div>
   </div>
 
@@ -883,6 +986,17 @@
   var xpValues = { attributes: {}, abilities: {}, disciplines: {} };
   var xp = { current: 0 };
   var vitals = { willpower: 0, hunger: 0, humanity: 7, path: 0 };
+
+  // Damage: up to 12 pins stuck into a doll. Each pin is 1 damage; zero pins is unharmed.
+  var MAX_PINS = 12;
+  var health = { pins: [] };   // pins: [{ x, y, r }] — position on the doll and which body part
+  var REGION_NAMES = { head: "Head", chest: "Chest", abdomen: "Abdomen", armL: "Left arm", armR: "Right arm", legL: "Left leg", legR: "Right leg" };
+  var REGION_ORDER = ["head", "chest", "abdomen", "armL", "armR", "legL", "legR"];
+  function regionCounts() {
+    var c = {};
+    health.pins.forEach(function (p) { c[p.r] = (c[p.r] || 0) + 1; });
+    return c;
+  }
 
   function xpAvailable() { return xp.current; }
 
@@ -1236,6 +1350,8 @@
     if (hgChip) hgChip.textContent = vitals.hunger;
     var huChip = document.querySelector('.rail-chip[data-vital="humanity"] .num');
     if (huChip) huChip.textContent = vitals.humanity;
+    var dmgChip = document.querySelector('.rail-chip[data-vital="health"] .num');
+    if (dmgChip) dmgChip.innerHTML = health.pins.length + "<small> / " + MAX_PINS + "</small>";
     var pathChip = document.querySelector('.rail-chip[data-vital="path"] .num');
     if (pathChip) pathChip.textContent = vitals.path;
     var pathLbl = document.getElementById("pathChipLbl");
@@ -1243,6 +1359,10 @@
   }
   updateRail();
 
+  // The Damage chip jumps to the Health tab rather than scrolling to a section.
+  document.querySelectorAll(".rail-chip[data-tab]").forEach(function (chip) {
+    chip.addEventListener("click", function () { document.getElementById(chip.dataset.tab).click(); });
+  });
   document.querySelectorAll(".rail-chip[data-target]").forEach(function (chip) {
     chip.addEventListener("click", function () {
       var target = document.getElementById(chip.dataset.target);
@@ -1324,6 +1444,76 @@
   });
   syncXpInput();
 
+  // ---- Health: the pin doll ----
+  var dollSvg = document.getElementById("dollSvg");
+  var pinLayer = document.getElementById("pinLayer");
+  var pinTray = document.getElementById("pinTray");
+  var dmgNum = document.getElementById("dmgNum");
+  var pinsLeft = document.getElementById("pinsLeft");
+  var dmgRegions = document.getElementById("dmgRegions");
+  var lastAdded = -1; // index of the pin just placed, so only that one animates in
+
+  var PIN_SHAPE =
+    '<line class="needle-edge" x1="0" y1="0" x2="0" y2="-30"/><line class="needle" x1="0" y1="0" x2="0" y2="-30"/>' +
+    '<circle class="head" cy="-36" r="8"/><circle class="shine" cx="-2.6" cy="-39" r="2.4"/>';
+
+  function renderHealth() {
+    var n = health.pins.length;
+    pinLayer.innerHTML = health.pins.map(function (p, i) {
+      var tilt = (Math.round(p.x * 7 + p.y * 13) % 41) - 20; // each pin leans a little differently
+      return '<g class="pin" data-i="' + i + '" transform="translate(' + p.x + ' ' + p.y + ') rotate(' + tilt + ')">' +
+        '<g class="pin-body' + (i === lastAdded ? ' new' : '') + '"><title>Pull out this pin (heal 1)</title>' +
+        '<circle class="hole" r="2.8"/>' + PIN_SHAPE + '<circle class="hit" cy="-30" r="16"/></g></g>';
+    }).join("");
+    lastAdded = -1;
+
+    pinTray.innerHTML = "";
+    for (var k = 0; k < MAX_PINS; k++) {
+      pinTray.insertAdjacentHTML("beforeend", '<svg class="tray-pin' + (k < n ? " used" : "") + '" viewBox="-12 -48 24 54" aria-hidden="true">' + PIN_SHAPE + "</svg>");
+    }
+    dmgNum.textContent = n;
+    pinsLeft.textContent = MAX_PINS - n;
+
+    var counts = regionCounts(), items = [];
+    REGION_ORDER.forEach(function (r) {
+      if (counts[r]) items.push("<li><span>" + REGION_NAMES[r] + "</span><b>" + counts[r] + "</b></li>");
+    });
+    dmgRegions.innerHTML = items.length ? items.join("") : '<li class="none">Unharmed</li>';
+    dollSvg.classList.toggle("full", n >= MAX_PINS);
+    updateRail();
+  }
+
+  dollSvg.addEventListener("click", function (ev) {
+    var pinEl = ev.target.closest(".pin");
+    if (pinEl) { // clicking an inserted pin pulls it out: heal 1
+      health.pins.splice(parseInt(pinEl.dataset.i, 10), 1);
+      renderHealth(); save();
+      return;
+    }
+    var part = ev.target.closest("[data-region]");
+    if (!part) return;
+    if (health.pins.length >= MAX_PINS) { toast("All " + MAX_PINS + " pins are in. Pull one out first."); return; }
+    var pt = dollSvg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    var p = pt.matrixTransform(dollSvg.getScreenCTM().inverse()); // click position in the doll's own coordinates
+    health.pins.push({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, r: part.dataset.region });
+    lastAdded = health.pins.length - 1;
+    renderHealth(); save();
+  });
+
+  // Saved pins come from storage or another device, so check them before trusting them.
+  function cleanPins(list) {
+    var out = [];
+    list.forEach(function (p) {
+      if (!p || out.length >= MAX_PINS) return;
+      var x = Number(p.x), y = Number(p.y);
+      if (!isFinite(x) || !isFinite(y)) return;
+      out.push({ x: Math.max(0, Math.min(320, x)), y: Math.max(0, Math.min(560, y)), r: REGION_NAMES[p.r] ? p.r : "chest" });
+    });
+    return out;
+  }
+  renderHealth();
+
   // ---- Descriptions toggle ----
   var DESC_KEY = "kindred-showdesc";
   var descBtn = document.getElementById("descToggle");
@@ -1345,7 +1535,7 @@
 
   function gather() {
     var data = {
-      fields: {}, values: values, xpValues: xpValues, xp: xp, vitals: vitals,
+      fields: {}, values: values, xpValues: xpValues, xp: xp, vitals: vitals, health: health,
       clan: clanSel.value, extraDisciplines: extraDisciplines, discMinOverride: discMinOverride,
       equip: (document.querySelector('input[name=equip]:checked') || {}).value || ""
     };
@@ -1401,6 +1591,9 @@
       vitals.humanity = (data.vitals.humanity != null) ? data.vitals.humanity : 7;
       vitals.path = (data.vitals.path != null) ? data.vitals.path : 0;
     }
+    // Saves from before the Health tab have no pins at all: that simply means no damage.
+    if (data.health && Array.isArray(data.health.pins)) health.pins = cleanPins(data.health.pins);
+    renderHealth();
     repaintPool("attributes", document.getElementById("attr-groups"));
     repaintPool("abilities", document.getElementById("abil-groups"));
     repaintPool("backgrounds", bgMount);
@@ -1461,6 +1654,9 @@
     L.push("Willpower: " + vitals.willpower + " / " + WILLPOWER_MAX_DOTS);
     L.push("Hunger:    " + vitals.hunger + " / " + HUNGER_MAX_DOTS);
     L.push("Humanity:  " + vitals.humanity + " / " + HUMANITY_MAX_DOTS);
+    var rc = regionCounts(), dmgParts = [];
+    REGION_ORDER.forEach(function (r) { if (rc[r]) dmgParts.push(REGION_NAMES[r] + " " + rc[r]); });
+    L.push("Damage:    " + health.pins.length + " / " + MAX_PINS + (dmgParts.length ? "  (" + dmgParts.join(", ") + ")" : ""));
     L.push("XP:        " + xpAvailable());
     L.push("");
 
@@ -2015,26 +2211,29 @@
 (function () {
   "use strict";
   var bar = document.getElementById("topbar");
-  var sheetPage = document.getElementById("sheetPage");
-  var notesPage = document.getElementById("notesPage");
+  var pages = {
+    sheet: document.getElementById("sheetPage"),
+    health: document.getElementById("healthPage"),
+    notes: document.getElementById("notesPage")
+  };
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".topbar .tab"));
-  if (!bar || !sheetPage || !notesPage) return;
+  if (!bar || !pages.sheet || !pages.health || !pages.notes) return;
 
   function setView(view) {
-    var notes = view === "notes";
-    document.body.classList.toggle("view-notes", notes);
-    sheetPage.hidden = notes;
-    notesPage.hidden = !notes;
-    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === (notes ? "notes" : "sheet"))); });
+    if (!pages[view]) view = "sheet";
+    Object.keys(pages).forEach(function (name) { pages[name].hidden = name !== view; });
+    document.body.classList.toggle("view-notes", view === "notes");
+    document.body.classList.toggle("view-health", view === "health");
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === view)); });
   }
-  function viewFromHash() { return location.hash === "#notes" ? "notes" : "sheet"; }
+  function viewFromHash() { return location.hash.slice(1); }
 
   tabs.forEach(function (t) {
     t.addEventListener("click", function () {
       setView(t.dataset.view);
       window.scrollTo(0, 0);
-      // Keep the page in the address bar so a refresh stays on Notes.
-      try { history.replaceState(null, "", t.dataset.view === "notes" ? "#notes" : location.pathname + location.search); } catch (e) {}
+      // Keep the page in the address bar so a refresh stays on it.
+      try { history.replaceState(null, "", t.dataset.view === "sheet" ? location.pathname + location.search : "#" + t.dataset.view); } catch (e) {}
     });
   });
   window.addEventListener("hashchange", function () { setView(viewFromHash()); });
