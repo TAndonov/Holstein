@@ -571,7 +571,39 @@
   .gl-pw:last-child { margin-bottom: 0; }
   .gl-pn { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; margin: 0 0 2px; color: var(--ink-muted); }
   .gl-pm { font-family: var(--ui); font-size: 0.78rem; margin: 0 0 6px; color: var(--ink-muted); }
-  .gl-pt { font-size: 0.98rem; line-height: 1.7; margin: 0; color: var(--ink-muted); }
+  .gl-pt { font-size: 0.98rem; line-height: 1.7; margin: 0 0 8px; color: var(--ink-muted); }
+  .gl-pw > :last-child { margin-bottom: 0; }
+  .gl-note { font-size: 0.92rem; line-height: 1.6; margin: 0 0 12px; padding: 10px 14px; color: var(--ink-muted); background: var(--surface-2); border-left: 3px solid var(--line); border-radius: 0 4px 4px 0; }
+  .gl-pl { margin: 0 0 8px; padding-left: 22px; font-size: 0.98rem; line-height: 1.7; color: var(--ink-muted); }
+  .gl-tw { margin: 2px 0 10px; overflow-x: auto; }
+  .gl-table { border-collapse: collapse; font-size: 0.9rem; line-height: 1.45; color: var(--ink-muted); }
+  .gl-table th, .gl-table td { text-align: left; vertical-align: top; padding: 5px 14px 5px 10px; border: 1px solid var(--line-soft); }
+  .gl-table th { font-family: var(--ui); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; background: var(--surface-2); }
+  .gl-sec.own .gl-pl, .gl-sec.own .gl-table { color: var(--ink); }
+  .gl-sec.own .gl-table th, .gl-sec.own .gl-table td { border-color: color-mix(in srgb, var(--blood) 25%, var(--line-soft)); }
+
+  /* ---------- Discipline "i" popover on the sheet (short powers for the dots you own) ---------- */
+  .disc-info {
+    margin-left: 8px; width: 20px; height: 20px; padding: 0; vertical-align: 2px; cursor: pointer;
+    font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 0.8rem; line-height: 1;
+    color: var(--ink-muted); background: var(--surface); border: 1px solid var(--line); border-radius: 50%;
+  }
+  .disc-info:hover, .disc-info[aria-expanded="true"] { color: var(--blood-strong); border-color: var(--blood); }
+  .disc-info:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .disc-pop {
+    position: absolute; z-index: 60; width: min(380px, calc(100vw - 24px)); max-height: min(70vh, 520px); overflow-y: auto;
+    padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    box-shadow: 0 14px 34px -10px var(--shadow); color: var(--ink);
+  }
+  .disc-pop[hidden] { display: none; }
+  .dp-title { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; margin: 0 0 8px; }
+  .dp-empty { margin: 0; font-size: 0.9rem; color: var(--ink-muted); font-style: italic; }
+  .dp-lv { padding: 8px 0 2px; border-top: 1px solid var(--line-soft); }
+  .dp-lv:first-of-type { border-top: 0; padding-top: 0; }
+  .dp-dots { font-family: var(--ui); font-size: 0.6rem; letter-spacing: 2px; color: var(--blood-strong); margin: 0 0 4px; }
+  .dp-pn { font-family: var(--serif); font-weight: 700; font-size: 0.98rem; margin: 0; color: var(--blood-strong); }
+  .dp-pm { font-family: var(--ui); font-size: 0.72rem; margin: 0 0 3px; color: var(--ink-muted); }
+  .dp-pt { font-size: 0.9rem; line-height: 1.5; margin: 0 0 8px; }
   .gl-sec.own .gl-pw { border-left-color: var(--blood); }
   .gl-sec.own .gl-pn { color: var(--blood-strong); }
   .gl-sec.own .gl-pm { color: var(--ink-soft); }
@@ -1199,6 +1231,789 @@
 </script>
 
 <script>
+// ---- Long-form discipline glossary (read by the Glossary tab) ----
+// The sheet's "i" popovers use the short list in DISCIPLINE_GLOSSARY above; the Glossary tab reads this one.
+(function () {
+  // Shape:  DISCIPLINE_LONG[discipline] = { desc, notes: [text], levels: [ { dot, powers: [ power ] } ] }
+  //   power = { n, name, meta, blocks }
+  //     n:      running number within the discipline, continuing across dots
+  //     meta:   the "Cost: ... · Roll: ..." line as written
+  //     blocks: paragraphs (strings), { list: [items] } or { table: { head: [..], rows: [[..]] } }, in reading order
+  function W(n, name, meta, blocks) { return { n: n, name: name, meta: meta, blocks: blocks }; }
+  function L(dot, powers) { return { dot: dot, powers: powers }; }
+  function T(head, rows) { return { table: { head: head, rows: rows } }; }
+  function U(items) { return { list: items }; }
+
+  var DISCIPLINE_LONG = {
+
+    "Potence": {
+      desc: "Supernatural strength, physical force, and active bodily resilience.",
+      notes: ["Potence incorporates the physical-resilience functions formerly associated with Fortitude. It emphasizes deliberate defenses, controlled force, and the willingness to endure damage rather than passive invulnerability."],
+      levels: [
+        L(1, [
+          W(1, "Strengthened Blood Surge", "Cost: 1 Rouse Check · Roll: Normal Strength-related action", [
+            "When invoking a Strength-related Blood Surge, add +2 additional dice to the action. This is added to the normal Blood Surge benefit."
+          ]),
+          W(2, "The Intercepting Hand", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
+            "Actively catch, stop, strike aside, or overpower an incoming physical attack or moving object. Successes determine how much opposing physical force is negated or redirected. Against an active attacker, resolve the attempt as an opposed contest.",
+            "One activation addresses one incoming physical event, not an entire sequence of attacks."
+          ])
+        ]),
+        L(2, [
+          W(3, "Deliberate Hardening", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
+            "Immediately before a known incoming impact, deliberately harden muscles and bodily structures. After the attack connects, reduce its damage by 1 point per success.",
+            "The vampire must have an opportunity to react. They cannot repeatedly harden against additional attacks before regaining that opportunity. Ambushes and attacks too fast to anticipate may bypass the defense."
+          ]),
+          W(4, "Penetrating Shockwave", "Cost: 1 Rouse Check · Roll: Potence + Athletics", [
+            "Transmit the force of a physical blow through its initial target into creatures or objects behind it.",
+            "Each success may provide 1 meter of displacement or 1 point of transmitted impact against a secondary target. Allocate successes when activating. Additional obstacles can reduce the remaining force according to their resistance."
+          ])
+        ]),
+        L(3, [
+          W(5, "Impossible Implements", "Cost: 1 Rouse Check during a Strength Blood Surge · Roll: Potence + Strength", [
+            "Instantly master the balance, leverage, and handling of an unusually heavy or awkward object. The roll determines the object's weight and awkwardness that can be overcome.",
+            "Within the achieved magnitude, ignore the normal difficulties of the object's balance and shape for that action. Its physical mass remains unchanged."
+          ]),
+          W(6, "Crushing Entrapment", "Cost: 1 Rouse Check · Roll: Potence + Athletics", [
+            "When pierced by an object, contract your tissues and muscles around it to seize, deform, or break it. The original injury still occurs.",
+            "You may voluntarily suffer additional Health damage for +2 dice per Health point suffered. Successes determine how severely the embedded object is damaged, opposed by its structural resistance when applicable."
+          ])
+        ]),
+        L(4, [
+          W(7, "Shape the Unyielding", "Cost: 1 Rouse Check · Roll: Potence + Craft", [
+            "Reshape resistant physical materials using your bare hands. Successes determine the amount and hardness of material that can be manipulated, while Craft governs precision.",
+            "The resulting alterations are permanent physical changes. The power does not automatically provide engineering or artistic knowledge beyond the roll."
+          ]),
+          W(8, "The Burden of Impact", "Cost: 1 Rouse Check · Roll: None", [
+            "Deliberately absorb the momentum of an incoming impact while suffering all its original damage and consequences.",
+            "On your next action, release the stored force through a Strength-based physical action. Add bonus dice equal to the damage actually suffered, up to your Potence rating.",
+            "If you fail to discharge the force on that next action, suffer 1 additional Health damage per 2 stored bonus dice, rounded up."
+          ])
+        ]),
+        L(5, [
+          W(9, "The Distant Fist", "Cost: 2 Rouse Checks · Roll: Potence + Strength", [
+            "Deliver a physical punch at supernatural range without bodily contact.",
+            "Maximum range is 3 meters per success. The same roll determines the effectiveness of the projected strike against the defender; do not make a separate attack roll."
+          ]),
+          W(10, "Supreme Physical Mastery", "Cost: 2 Rouse Checks with Blood Surge · Roll: Normal Athletics or Brawl action", [
+            "Add +2 automatic successes to a Blood-Surged Athletics or Brawl roll.",
+            "These are automatic successes, not bonus dice or successes equal to Potence rating. The benefit stacks with Strengthened Blood Surge when both apply."
+          ])
+        ]),
+        L(6, [
+          W(11, "Conducted Strength", "Cost: 2 Rouse Checks · Roll: Potence + Brawl or Potence + Athletics", [
+            "Transmit physical force through an object or connected material that you touch or strike.",
+            "Each success allows force to propagate through another meter of connected solid material or overcome another point of structural resistance. Physical discontinuities interrupt transmission unless overcome by the roll."
+          ]),
+          W(12, "Repeated Momentum", "Cost: 2 Rouse Checks · Roll: Potence + Passion", [
+            "Command the universe to repeat the momentum of one completed physical action.",
+            "Each 2 successes allow one repetition, with at least one repetition on a successful activation. Repetitions act upon the original physical interaction rather than creating independent attacks.",
+            "All repetitions occur before the beginning of your next action."
+          ])
+        ]),
+        L(7, [
+          W(13, "Nullification of Force", "Cost: 2 Rouse Checks · Roll: Potence + Strength", [
+            "Actively suppress incoming physical force over an area.",
+            "Divide successes between the area's radius in meters and the amount of impact or force reduction. The suppression applies to the triggering event or a brief continuous action, not to an entire scene of passive protection."
+          ]),
+          W(14, "Grasp the Ungraspable", "Cost: 2 Rouse Checks · Roll: Potence + Strength", [
+            "Physically seize and manipulate phenomena ordinarily impossible to grasp, including flowing water or wind.",
+            "Successes determine the magnitude of the phenomenon that can be controlled. Control persists while you maintain deliberate physical engagement."
+          ]),
+          W(15, "Transcendent Blood Surge", "Type: Passive enhancement · Cost: No additional Rouse Check beyond the applicable Blood Surge", [
+            "Add +2 automatic successes to qualifying Strength-based Blood Surge actions.",
+            "These stack with Supreme Physical Mastery at dot 5. A qualifying Strength + Brawl Blood Surge can receive +2 bonus dice from dot 1 and +4 automatic successes from dots 5 and 7 combined."
+          ])
+        ]),
+        L(8, [
+          W(16, "The Weight of the Earth", "Cost: 3 Rouse Checks · Roll: Potence + Strength", [
+            "While touching the ground, couple incoming impacts to the earth or borrow its apparent inertia to reinforce physical actions.",
+            "Successes determine the scale of the inertia affected. A successful grounding can transmit an impact into the earth without requiring the vampire's body to bear the entire force. Failure leaves the original physical consequences intact.",
+            "Transferred force can damage the ground and nearby structures."
+          ])
+        ])
+      ]
+    },
+
+    "Celerity": {
+      desc: "Speed, trajectory, movement, action timing, and inertia.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "The First Instant", "Cost: 1 Rouse Check · Roll: Dexterity + Wits", [
+            "Add bonus dice equal to your Celerity rating to initiative.",
+            "The benefit also allows you to complete one ordinary first-turn physical action before a slower combatant can respond, where initiative permits. It grants no extra action."
+          ]),
+          W(2, "Accelerated Blood Surge", "Cost: 1 Rouse Check · Roll: Normal Dexterity-related action", [
+            "Add +2 dice to Dexterity-related Blood Surges, excluding initiative."
+          ])
+        ]),
+        L(2, [
+          W(3, "Redirect Momentum", "Cost: 1 Rouse Check · Roll: Celerity + Dexterity", [
+            "By touching, catching, or intercepting a moving object or creature, redirect its trajectory.",
+            "Successes determine the extent of the change. Critical success can reverse its direction."
+          ]),
+          W(4, "Instantaneous Step", "Cost: Free · Roll: Replace the normal Attribute with Celerity", [
+            "Perform an instantaneous step, brief physical gesture, or immediate defensive movement within reach.",
+            "Use Celerity instead of the ordinary Attribute in the appropriate roll, such as Celerity + Athletics for a dodge. This is not an additional attack or full action."
+          ])
+        ]),
+        L(3, [
+          W(5, "Blink", "Cost: 1 Rouse Check · Roll: Celerity + Strength", [
+            "Traverse a physically possible path almost instantaneously.",
+            "Cover up to 3 meters per success, adjusted for obstacles. Solid impassable barriers prevent movement. This is not teleportation."
+          ]),
+          W(6, "Instantaneous Action", "Cost: 1 Rouse Check · Roll: Ordinary action pool plus additional Celerity dice", [
+            "Perform one physical action with supernatural abruptness.",
+            "Roll the normal action pool plus a number of additional dice equal to Celerity. Each success scored on those additional Celerity dice removes one die from the opponent's active defense pool.",
+            "The ordinary action resolves normally. Noncombat actions under ordinary circumstances succeed unless meaningfully opposed or unusually difficult. No additional attack is granted."
+          ])
+        ]),
+        L(4, [
+          W(7, "Impossible Running", "Cost: 1 Rouse Check · Roll: Celerity + Athletics", [
+            "Run across vertical surfaces, water, ceilings, and other paths incapable of supporting ordinary movement.",
+            "One success negotiates a stable extraordinary surface. Additional successes overcome more difficult transitions, unstable surfaces, and changes in direction.",
+            "The effect persists for one continuous movement sequence. Losing the necessary momentum can end it."
+          ]),
+          W(8, "Expanded Immediate Reach", "Type: Passive, always active", [
+            "Your immediate reach becomes 2 meters per Celerity dot.",
+            "You may freely reposition within that area as part of an action, including approaching a target, acting, and withdrawing. No additional attacks are granted."
+          ])
+        ]),
+        L(5, [
+          W(9, "Compression of Action", "Cost: 2 Rouse Checks · Roll: Each constituent action uses its normal pool", [
+            "Compress several physical actions into one action interval.",
+            "You may perform up to Celerity rating constituent actions. Resolve them in sequence, making a separate normal roll for each.",
+            "The entire sequence ends immediately upon the first failed action.",
+            "You cannot repeat an action against the same opponent more than once within the sequence unless the action's existing rules expressly permit it."
+          ]),
+          W(10, "Gift of Speed", "Cost: 1 Rouse Check per recipient per granted dot · Roll: None", [
+            "Through concentration and blood consumption, grant another creature temporary access to Celerity dots 1, 2, and 3, in that order.",
+            "The recipient cannot exceed the donor's own Celerity rating. Granted powers function normally and require their usual activation costs.",
+            "Duration: one scene."
+          ])
+        ]),
+        L(6, [
+          W(11, "Catastrophic Velocity", "Cost: 2 Rouse Checks · Roll: Celerity + Athletics", [
+            "Use extraordinary speed to generate frictional ignition, sonic booms, destructive vibration, or resonance.",
+            "Successes determine the magnitude of the disturbance and the material resistance overcome.",
+            "The vampire must actually perform the movement that produces the phenomenon; the effect cannot originate arbitrarily at a remote location."
+          ])
+        ]),
+        L(7, [
+          W(12, "Master of Positions", "Cost: 2 Rouse Checks · Roll: Celerity + Conviction", [
+            "Reposition multiple creatures, objects, or limbs within one action, imparting selected directions of movement.",
+            "Each success allows one consequential repositioning within your accessible movement area. Resisting creatures may oppose forced displacement.",
+            "Each subject is moved once; this power does not generate separate attacks against every affected creature."
+          ])
+        ]),
+        L(8, [
+          W(13, "Sovereignty of Motion", "Cost: 3 Rouse Checks · Roll: Celerity + Intelligence", [
+            "Redistribute motion and inertia between bodies while venting excess kinetic energy into the surrounding environment.",
+            "Successes determine the magnitude of moving mass and speed that can be affected, using escalating difficulties.",
+            "Physical contact or another established physical interaction is required. Exceptionally high rolls can affect enormous kinetic events, provided the environment can absorb the discharged energy.",
+            "Venting momentum may generate significant friction, pressure, or structural destruction."
+          ])
+        ])
+      ]
+    },
+
+    "Presence": {
+      desc: "The creation, amplification, preservation, suppression, and transmission of emotion.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "Fascination", "Cost: 1 Rouse Check · Roll: Presence + Passion", [
+            "Draw emotional attention toward yourself, becoming difficult to disregard.",
+            "Successes determine the strength of attraction and whether observers become sufficiently fascinated for later Presence powers. The effect lasts one scene.",
+            "Obvious danger can permit resistance, but hostility does not automatically prevent fascination. This power influences attention and attraction without directly commanding behavior."
+          ]),
+          W(2, "Suggestion", "Cost: 1 Rouse Check · Roll: Presence + Conviction", [
+            "Select an emotion you currently experience, intensify it, and project it through an aura. Creatures focusing on you may experience that emotion.",
+            "Successes determine the strength and reach of the projection. The aura lasts one scene while you sustain the emotion.",
+            "Affected creatures retain control over their actions."
+          ])
+        ]),
+        L(2, [
+          W(3, "Emotional Creation", "Cost: 1 Rouse Check · Roll: Presence + Conviction", [
+            "Create an emotion within a creature already affected by your Fascination. Unlike Suggestion, you do not need to feel the emotion yourself.",
+            "Successes determine intensity. The effect lasts one scene, unless a sufficiently powerful contradictory emotional event overcomes it.",
+            "The power creates a genuine emotional experience, not compulsory obedience."
+          ]),
+          W(4, "Savor Feelings", "Type: Passive Blood Surge enhancement", [
+            "When invoking Blood Surge to improve an Insight or Empathy roll, gain +2 additional dice.",
+            "The bonus applies to recognizing, interpreting, and evaluating emotional states rather than automatically persuading or manipulating the subject.",
+            "No separate activation cost is required."
+          ])
+        ]),
+        L(3, [
+          W(5, "Yearning", "Cost: 1 Rouse Check · Roll: Presence + Passion", [
+            "Establish persistent emotional longing or attachment focused upon yourself.",
+            "Duration is one night per success. An unwilling target may resist through an appropriate Willpower contest.",
+            "The emotional attachment encourages the subject to seek, remember, or remain concerned with you, but does not compel specific actions."
+          ]),
+          W(6, "Leech Emotion", "Cost: 1 Rouse Check · Roll: Presence + Conviction", [
+            "Touch a creature experiencing a strong emotion and extract part of that emotion into a supernatural reserve.",
+            "Each success stores one emotional charge. Spending a charge grants +1 die to a subsequent Presence roll involving that emotion.",
+            "Maximum stored charges equal your Presence rating. Charges expire at the next sunset if unused.",
+            "Extraction proportionally diminishes the donor's current emotional intensity."
+          ])
+        ]),
+        L(4, [
+          W(7, "Herald of Passion", "Cost: 2 Rouse Checks · Roll: Presence + Craft", [
+            "Embed an existing Presence effect into a visual representation, including a portrait, icon, heraldic emblem, or comparable image.",
+            "The Craft roll establishes how effectively the symbol carries the chosen influence. Its supernatural charge lasts one month per success, or until destroyed or stripped of power.",
+            "A viewer encountering the symbol can be subjected to the embedded emotional effect without the creator making another activation roll.",
+            "The underlying Presence effect retains its applicable conditions."
+          ])
+        ]),
+        L(5, [
+          W(8, "The Living Song", "Cost: 2 Rouse Checks · Roll: Presence + Expression", [
+            "Embed existing Presence effects into spoken or written language, including songs, sagas, poems, recitations, and other narratives.",
+            "Successes determine how faithfully the supernatural influence survives transmission or reproduction.",
+            "The work remains empowered for one year per success. Copies and performances can retain the effect if they preserve the meaningful structure of the original.",
+            "The influence activates when someone meaningfully engages with the work, not merely by hearing an isolated word."
+          ])
+        ]),
+        L(6, [
+          W(9, "Forbidden Passion", "Cost: 2 Rouse Checks · Roll: Presence + Conviction", [
+            "Forbid a specified emotion in creatures currently affected by your Fascination.",
+            "The emotion becomes inaccessible to conscious experience, without erasing associated memories.",
+            "Suppression lasts one scene per success. An overwhelming external event may allow another resistance contest."
+          ]),
+          W(10, "Crimson Sanctuary", "Cost: Minimum 3 Rouse Checks, plus 1 for each major additional enclosed structure or equivalent area · Roll: Presence + Conviction", [
+            "Create a blood-marked boundary enclosing a territory. All creatures entering the territory become subject to one selected emotional effect available through your Presence.",
+            "Duration is one night per success.",
+            "The chosen emotional influence operates with its normal resistance conditions. Breaking part of the blood boundary disrupts the effect in the corresponding portion of the territory."
+          ])
+        ]),
+        L(7, [
+          W(11, "Ancestral Passion", "Cost: 3 Rouse Checks · Roll: Presence + Guile", [
+            "Imprint a long-lasting, triggered emotional reaction upon a bloodline or genus of creatures.",
+            "You must have access to a representative individual or an appropriate supernatural connection to the lineage.",
+            "Successes determine the extent of the affected lineage and the intensity of the response. The effect can last decades, with exceptional results extending it across generations.",
+            "Define the trigger when activating the power. Affected creatures retain the ability to act contrary to the imposed emotion."
+          ])
+        ]),
+        L(8, [
+          W(12, "Avatar of Passion", "Cost: 3 Rouse Checks · Roll: Presence + Conviction", [
+            "Become an incorporeal supernatural manifestation of a chosen emotion, with capabilities defined through a plot-device-level avatar.",
+            "The roll establishes the struggle between personal control and the manifested feeling:",
+            T(["Successes", "Control"], [
+              ["1–2", "Unstable manifestation; the emotion strongly directs behavior"],
+              ["3–4", "Meaningful personal control remains"],
+              ["5+", "Substantial control over the avatar"]
+            ]),
+            "The physical body becomes inaccessible while the avatar manifests, but the avatar is not automatically immune to supernatural attack, containment, or banishment.",
+            "The transformation ordinarily ends with the scene unless the avatar's specific construction provides otherwise."
+          ])
+        ])
+      ]
+    },
+
+    "Dominate": {
+      desc: "The imposition of will through commands, memories, possession, supernatural obligations, and enduring authority.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "The Commanding Word", "Cost: 1 Rouse Check · Roll: Dominate + Conviction", [
+            "Establish eye contact and issue a spoken command requiring an immediate action or decision.",
+            "A successfully dominated subject begins complying on their next available opportunity. The command lasts until its immediate objective is completed, interrupted, or made impossible.",
+            "Successes determine the strength of the imposed command. This power does not establish lasting servitude."
+          ])
+        ]),
+        L(2, [
+          W(2, "The Stolen Memory", "Cost: 1 Rouse Check · Roll: Dominate + Intelligence", [
+            "Suppress, replace, fabricate, or modify memories.",
+            "Each success permits alteration of a coherent detail or short segment of recollection. Major autobiographical changes require exceptional success.",
+            "Changes persist until exposed or overturned through appropriate means. Strong contradictory evidence may alert a subject that their recollection is unreliable.",
+            "Vampires are particularly resistant to long-term memory alteration and ordinarily recognize that an alien will invaded their mind."
+          ])
+        ]),
+        L(3, [
+          W(3, "The Sleeping Command", "Cost: 1 Rouse Check · Roll: Dominate + Guile", [
+            "Implant a command that activates when a defined condition occurs.",
+            "A successful activation provides one trigger and one associated command. Each additional success beyond the first may add a meaningful condition or exception.",
+            "The command remains dormant for one month per success, unless triggered or removed earlier."
+          ]),
+          W(4, "The Piercing Gaze", "Type: Passive", [
+            "While maintaining concentrated eye contact with a creature experiencing a powerful distraction, gain +2 dice on Dominate attempts against it.",
+            "The distraction must meaningfully compromise concentration or resistance. Routine conversation is insufficient.",
+            "This enhancement can combine with the fourth-dot Crimson Mandate."
+          ])
+        ]),
+        L(4, [
+          W(5, "The Borrowed Body", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
+            "Temporarily possess another creature, directing its physical actions with your own consciousness.",
+            "Against an unresisting mortal, duration is one scene per success. Against a resisting supernatural vessel, successful possession lasts one scene.",
+            "Severe injury to the vessel or powerful opposing mental influence can provoke another contest for control.",
+            "Your original body remains vulnerable. Possession transfers agency into the vessel and does not create extra actions."
+          ]),
+          W(6, "The Crimson Mandate", "Cost: At least 1 Rouse Check · Roll: The applicable Dominate power, opposed by the immortal's supernatural resistance", [
+            "Physical contact and vitae expenditure allow Dominate to affect vampires and other appropriate immortal beings.",
+            "Each additional Rouse Check grants +1 bonus die, up to a maximum of additional dice equal to your Dominate rating.",
+            "Against vampires, lasting conditioning or substantial memory alteration grants the victim +2 defense dice. Immediate commands do not incur this additional resistance.",
+            "Vampiric victims ordinarily identify who invaded their consciousness. When a command succeeds, they must obey despite knowing they have been dominated."
+          ])
+        ]),
+        L(5, [
+          W(7, "The Chain of Command", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
+            "Establish a supernatural hierarchy through which designated subordinates communicate and enforce your commands.",
+            "Each success permits one additional command level or one additional directly controlled branch.",
+            "The hierarchy persists for one month per success, unless disrupted or dismantled.",
+            "Intermediaries can transmit the master's authority but do not personally acquire Dominate powers."
+          ])
+        ]),
+        L(6, [
+          W(8, "The Binding Word", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
+            "Bind an enduring supernatural obligation into an oath, written decree, contract, or formal undertaking.",
+            "The subject must acknowledge the oath or be compelled into it through successful prior domination.",
+            "The obligation lasts one year per success. A subject attempting to violate it must first overcome its remaining supernatural authority through an appropriate contest.",
+            "Unlike Quietus's blood laws, this power directly constrains voluntary decisions rather than automatically inflicting physical punishment."
+          ])
+        ]),
+        L(7, [
+          W(9, "The Invading Sovereign", "Cost: 3 Rouse Checks · Roll: Dominate + Will", [
+            "Project your consciousness into another mind without ordinary eye contact.",
+            "A previously bound creature can be reached anywhere within the same supernatural realm while the connection persists. The elder may communicate, command, or attempt possession through the connection.",
+            "An unwilling, unbound immortal requires an existing Crimson Mandate connection or another established psychic avenue before intrusion can be attempted.",
+            "The target may resist. During direct possession, the vampire's original body remains vulnerable."
+          ]),
+          W(10, "The Forbidden Choice", "Cost: 3 Rouse Checks · Roll: Dominate + Will", [
+            "Prevent a creature from voluntarily choosing a specified category of actions.",
+            "The prohibition must be defined precisely. Broad or ambiguous categories require substantially greater success and may be challenged by contradictory situations.",
+            "Duration is one month per success. Vampires retain their enhanced resistance against prolonged domination.",
+            "The target may understand the forbidden act but cannot ordinarily decide to perform it."
+          ])
+        ]),
+        L(8, [
+          W(11, "The Eternal Throne", "Cost: 3 Rouse Checks initially, with renewal of 3 Rouse Checks every year · Roll: Dominate + Conviction", [
+            "Bind a supernatural mandate into an established institution, title, or office with recognized succession rules.",
+            "Legitimate successors inherit the supernatural obligation associated with the office. Successes determine how deeply the mandate extends through the hierarchy and how difficult it is to resist.",
+            "The vampire may use the bound institutional network as a conduit for commands or projected consciousness.",
+            "If the annual renewal is not paid, the mandate becomes dormant until renewed rather than immediately disappearing."
+          ])
+        ])
+      ]
+    },
+
+    "Auspex": {
+      desc: "Supernatural perception, psychic knowledge, revelation, and awareness of time.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "Aura Reading", "Cost: 1 Rouse Check · Roll: Auspex + Empathy", [
+            "Perceive another creature's aura, gaining information about emotional states, supernatural nature, spiritual abnormalities, and traces of diablerie.",
+            T(["Successes", "Information"], [
+              ["1", "Dominant emotional state"],
+              ["2–3", "Additional emotions and supernatural characteristics"],
+              ["4–5", "Deeper spiritual abnormalities and concealed properties"],
+              ["Higher margins", "Increasingly detailed information, subject to supernatural opposition"]
+            ]),
+            "Effects that specifically conceal the subject's aura or supernatural identity may contest the roll."
+          ]),
+          W(2, "The Patient Observer", "Type: Passive", [
+            "Gain +2 additional dice when invoking Blood Surge to improve an investigation roll in a calm environment.",
+            "No separate activation is required. The bonus does not apply during chaotic or distracting investigations."
+          ])
+        ]),
+        L(2, [
+          W(3, "Spirit's Touch", "Cost: 1 Rouse Check · Roll: Auspex + Intelligence", [
+            "Touch an object to examine psychic impressions left by its history.",
+            "One success reveals the strongest recent impression. Additional successes reveal weaker, more complex, or more distant experiences.",
+            "The power accesses impressions actually associated with the object rather than an unrestricted record of its entire existence."
+          ]),
+          W(4, "Bestowed Senses", "Cost: 1 Rouse Check · Roll: Auspex + Empathy", [
+            "Receive sensory information through another creature's senses.",
+            "You must be able to identify the subject or have encountered them previously. Successes determine the available sensory channels and the distance at which they can be accessed.",
+            "Duration: one scene.",
+            "An unwilling supernatural subject may resist. The subject does not automatically know that their perceptions are being shared."
+          ])
+        ]),
+        L(3, [
+          W(5, "Telepathy", "Cost: 1 Rouse Check · Roll: Auspex + Intelligence", [
+            "Read thoughts or communicate directly between minds.",
+            "Basic success permits access to surface thoughts. Additional successes allow progressively deeper examination of memories, reasoning, and concealed intentions.",
+            "Willing subjects can maintain mental communication for one scene. Unwilling subjects may resist intrusive reading."
+          ]),
+          W(6, "Sixth Sense", "Cost: 1 Rouse Check · Roll: Auspex + Occult", [
+            "Detect active spellcasting, magical workings, or comparable supernatural disturbances in the vicinity.",
+            "Successes determine range and specificity. Basic success indicates that something supernatural is occurring; greater successes reveal its direction or general nature.",
+            "This power does not automatically detect every concealed creature or warn against ordinary physical danger."
+          ])
+        ]),
+        L(4, [
+          W(7, "Piercing Sight", "Cost: 2 Rouse Checks · Roll: Auspex + Empathy or Auspex + Occult, opposed", [
+            "Penetrate supernatural illusions, perceptual concealment, and deceptive supernatural manifestations.",
+            "Use Auspex + Empathy against mental or perceptual concealment, or Auspex + Occult against fundamentally magical concealment.",
+            "A narrow victory reveals that deception exists. Additional surplus successes disclose progressively more of the reality underneath.",
+            "The power does not automatically dispel an illusion for other observers."
+          ]),
+          W(8, "Premonition", "Cost: 2 Rouse Checks · Roll: Auspex + Occult", [
+            "Receive intuitive impressions about possible developments likely to become relevant within the current scene or following night.",
+            "Successes determine the relevance and clarity of the warning. Information remains predominantly emotional, intuitive, or indistinct rather than forming a detailed visual prophecy.",
+            "The vampire perceives possibilities but cannot select an outcome through this power."
+          ])
+        ]),
+        L(5, [
+          W(9, "Astral Projection", "Cost: 2 Rouse Checks · Roll: Auspex + Conviction", [
+            "Separate consciousness from the physical body and project it into distant locations.",
+            "Successes determine distance, duration, and resistance to supernatural interference. Ordinary success permits local astral exploration for one scene; exceptional results allow more distant travel.",
+            "Earlier Auspex powers can function through the astral consciousness where appropriate.",
+            "The physical body remains inert and vulnerable. The projected consciousness cannot ordinarily deliver physical attacks."
+          ]),
+          W(10, "Threshold Sight", "Cost: 2 Rouse Checks · Roll: Auspex + Occult", [
+            "Perceive hidden thresholds and gateways between supernatural realms, including the Dreaming, Abyss, and Umbra.",
+            "A basic success identifies a gateway and one major condition necessary to open it. Additional successes disclose further requirements, hazards, or steps.",
+            "Different gateways have different metaphysical requirements. Understanding them does not automatically provide the means to fulfill them."
+          ])
+        ]),
+        L(6, [
+          W(11, "The Unveiled Mechanism", "Cost: 2 Rouse Checks · Roll: Auspex + Occult", [
+            "Examine the structure and functioning of supernatural effects.",
+            "Each success reveals a meaningful aspect of the working, such as its source, component, dependency, limitation, or vulnerability.",
+            "Complex effects require more successes for complete understanding. Partial readings can provide useful information without revealing every hidden contingency.",
+            "This power analyzes supernatural phenomena but does not automatically dispel them."
+          ])
+        ]),
+        L(7, [
+          W(12, "Witness of Ages", "Cost: 3 Rouse Checks · Roll: Auspex + Intelligence", [
+            "Psychically relive a past event through the experiences and consciousness of those involved.",
+            "Requires an authentic connection to the event, such as an associated location, object, person, or surviving trace.",
+            "Successes determine historical depth, completeness, and detail.",
+            "The vampire experiences part of the event subjectively but cannot alter it. Extended immersion exposes them to the emotional and psychological consequences of the experiences witnessed."
+          ])
+        ]),
+        L(8, [
+          W(13, "The Fourth-Dimensional Eye", "Cost: 3 Rouse Checks · Roll: Auspex + Intelligence", [
+            "Perceive alternative future histories as simultaneously available possibilities.",
+            "For an immediate consequential event, a successful roll allows the vampire to select and attune to a genuinely possible favorable outcome. Extraordinary successes permit selection among increasingly unlikely—but still possible—outcomes.",
+            "Longer-term exploration reveals progressively broader and more interconnected futures. Most distant branches lead to destruction, death, or survival at the expense of profound suffering.",
+            "Exploring increasingly distant horizons introduces severe psychological consequences, requiring Will-based resistance or acceptance of trauma.",
+            "The power cannot produce physically impossible outcomes or guarantee that a favorable immediate result will lead to a favorable distant future. It does not stop, rewind, or accelerate time."
+          ])
+        ])
+      ]
+    },
+
+    "Obtenebration": {
+      desc: "Cast shadows, supernatural darkness, Abyssal beings, and the boundary of the Abyss.",
+      notes: ["Fundamental rule: At early dots, shadow manipulation requires actual cast shadows formed by light and obstruction. Complete darkness does not itself produce cast shadows. From dot 3, the vampire can also manifest genuine supernatural darkness and interact more directly with the Abyss."],
+      levels: [
+        L(1, [
+          W(1, "Shadowmeld", "Cost: 1 Rouse Check · Roll: Obtenebration + Dexterity for object manipulation", [
+            "Merge your body into an existing cast shadow.",
+            "You can move within the continuous shadow at ordinary movement speed. Leaving its boundaries ends the concealment unless another ability permits continuation.",
+            "Manipulating objects through the shadow uses Obtenebration + Dexterity and is limited to its immediate boundaries and nearby reachable space."
+          ]),
+          W(2, "Eyes of Darkness", "Type: Passive", [
+            "See normally in absolute darkness, even where no cast shadows exist.",
+            "This does not independently grant control over darkness."
+          ]),
+          W(3, "Edge of Night", "Cost: 1 Rouse Check · Roll: Obtenebration + Craft at creation; Dexterity + Melee for subsequent attacks", [
+            "Forge a cutting weapon from the edge of an actual cast shadow.",
+            "Roll Obtenebration + Craft once to determine its quality, durability, and cutting effectiveness. Basic success produces a serviceable melee weapon; additional successes increase its supernatural effectiveness.",
+            "After creation, wield it as a melee weapon using normal attack rolls. The weapon lasts until the end of the scene or until destroyed."
+          ])
+        ]),
+        L(2, [
+          W(4, "The Black Road", "Cost: 1 Rouse Check · Roll: Obtenebration + Athletics", [
+            "Move along connected cast shadows, including routes over vertical surfaces, ceilings, or water.",
+            "Travel up to 5 meters per success along a continuous shadow route in one movement.",
+            "Gaps in shadow continuity prevent progression unless another applicable power bridges them. This is not unrestricted teleportation."
+          ]),
+          W(5, "Shadow Marriage", "Cost: 1 Rouse Check · Roll: Obtenebration + Strength when resisting transmitted harm", [
+            "Establish a supernatural physical connection between your shadow and another creature's shadow.",
+            "The shadows must overlap when the bond is created. Once established, the connection persists regardless of physical distance.",
+            "Harm can be transmitted through the bond. When it does, Obtenebration + Strength can reduce the transmitted portion by 1 damage point per success, without reducing the harm suffered by the original victim.",
+            "The bond lasts indefinitely until one participant ceases to exist or it is deliberately severed.",
+            "To break the bond, you must physically touch the other creature's cast shadow."
+          ])
+        ]),
+        L(3, [
+          W(6, "Devour Light", "Cost: 1 Rouse Check · Roll: Obtenebration + Guile", [
+            "Manifest supernatural darkness that consumes illumination.",
+            "Each success can extinguish one ordinary light source or expand the darkened area by several meters, subject to illumination intensity and scale.",
+            "Duration: one scene.",
+            "The power suppresses light only. It does not automatically silence sound, restrain creatures, or inflict damage. Removing light may also eliminate the cast shadows needed for earlier powers."
+          ]),
+          W(7, "The First Guest", "Cost: 1 Rouse Check · Roll: Obtenebration + Willpower", [
+            "Invite an independent Abyssal creature into the world.",
+            "Successes determine the magnitude of the creature that can safely be summoned and the degree of initial control.",
+            "The entity retains its own motives and appetites. Successful summoning does not provide permanent obedience. New contests, negotiation, or offerings may become necessary when its interests conflict with the summoner's."
+          ]),
+          W(8, "Shadow Arms", "Cost: 1 Rouse Check · Roll: Obtenebration + Brawl", [
+            "Extend your own arms into supernatural shadow appendages capable of striking, grappling, and manipulating objects.",
+            "Successes determine reach and physical effectiveness.",
+            "The appendages last one scene, but consequential actions still consume your ordinary actions. They are bodily extensions, not autonomous summoned creatures."
+          ])
+        ]),
+        L(4, [
+          W(9, "Black Metamorphosis", "Cost: 2 Rouse Checks · Roll: Obtenebration + Willpower", [
+            "Merge your flesh with Abyssal substance or an Abyssal entity, assuming a monstrous physical form.",
+            "The form's capabilities are defined by the manifested Abyssal nature. Successes determine how much control you retain over the transformation.",
+            "Duration: one scene.",
+            "Alien instincts may interfere with actions when control fails, but failure does not automatically transfer unrestricted control of the character to the Storyteller."
+          ])
+        ]),
+        L(5, [
+          W(10, "The Hollow Margin", "Cost: 2 Rouse Checks · Roll: Obtenebration + Intelligence", [
+            "Open an Abyssal pocket-space within an appropriate shadow or supernatural darkness.",
+            "The interior can exceed the apparent volume of its entrance. Successes determine the space available, beginning with a small enclosure and reaching room-sized chambers on strong results.",
+            "Duration: one scene, unless anchored through another ritual or expenditure.",
+            "Objects and creatures can be placed inside, but the pocket remains susceptible to Abyssal interference. It is not guaranteed safe storage."
+          ])
+        ]),
+        L(6, [
+          W(11, "The Black Reliquary", "Cost: 3 Rouse Checks · Roll: Obtenebration + Willpower", [
+            "Imbue a physical object or living creature with an Abyssal entity.",
+            "The entity may animate or empower the vessel, according to its supernatural nature. Successes determine containment stability and how much influence the vampire retains.",
+            "An object may remain inhabited indefinitely if the vessel survives.",
+            "Living hosts deteriorate rapidly and must contend with their vessel's supernatural degradation at intervals appropriate to the entity.",
+            "The inhabiting creature retains independent appetites and motives."
+          ])
+        ]),
+        L(7, [
+          W(12, "The Unlit Gate", "Cost: 3 Rouse Checks · Roll: Obtenebration + Conviction", [
+            "Force a target within immediate supernatural reach into the Abyss.",
+            "A resisting target may oppose the effect. Successes determine the completeness of the exile and how difficult the resulting threshold is to reopen.",
+            "The victim does not automatically die. Escape or return remains possible through appropriate supernatural means."
+          ])
+        ]),
+        L(8, [
+          W(13, "The Shadow of What Was", "Cost: 3 Rouse Checks · Roll: Obtenebration + Intelligence", [
+            "Summon an Abyssal remnant of a creature, object, or structure that has been destroyed.",
+            "The vampire must have an authentic connection to the vanished original, such as a surviving trace, reliable identification, or meaningful knowledge of its destruction.",
+            "Successes determine the summoned remnant's magnitude and fidelity.",
+            "The remnant is not the original restored to existence. It may reproduce fragments of memories, behavior, or supernatural qualities, but remains fundamentally altered and alien.",
+            "Duration: one scene, unless sustained or bound through other Abyssal methods. Control over its independent will uses Obtenebration + Willpower when necessary."
+          ])
+        ])
+      ]
+    },
+
+    "Obfuscate": {
+      desc: "Concealment, misdirection, withdrawal of attention, the suppression of knowledge, and conceptual erasure.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "Averted Gaze", "Cost: 1 Rouse Check · Roll: Obfuscate + Intelligence", [
+            "Deliberately cease paying conscious attention to other creatures. While you refuse to acknowledge them, they cannot consciously perceive you.",
+            "You may move and perform actions that do not require attending to another creature.",
+            "Deliberately examining, acknowledging, or interacting with someone breaks concealment with respect to that individual.",
+            "Duration: one scene, provided the conditions remain satisfied.",
+            "Successes determine the strength of concealment against deliberate scrutiny. Supernatural perception may oppose it."
+          ]),
+          W(2, "Cache", "Cost: 1 Rouse Check per size category · Roll: Obfuscate + Stealth", [
+            "Conceal a selected object or physical location from observers without physically removing it.",
+            T(["Size", "Rouse Checks", "Minimum successes"], [
+              ["Smaller than a room", "1", "1"],
+              ["Room-sized", "2", "2"],
+              ["Building-sized", "3", "3"],
+              ["Neighborhood-sized", "4", "4"],
+              ["Town-sized", "5", "5"]
+            ]),
+            "Duration: one scene per success.",
+            "The hidden subject remains physically present and can still cause physical interactions. The effect grows naturally with the vampire's Obfuscate rating."
+          ])
+        ]),
+        L(2, [
+          W(3, "Cloud Judgment", "Cost: 1 Rouse Check · Roll: Obfuscate + Guile", [
+            "Focus upon one opponent, interfering with their ability to formulate purposeful action against you.",
+            "The effect lasts one scene while concentration is maintained.",
+            "Directly attacking or seriously threatening the opponent allows renewed resistance. The target's automatic physical responses are not inherently suppressed.",
+            "The power impairs the victim's capacity to direct attention and intention against you rather than making them unconscious or physically paralyzed."
+          ]),
+          W(4, "The Untraced", "Cost: 1 Rouse Check · Roll: Obfuscate + Stealth", [
+            "Conceal evidence created by your presence or activities, including tracks, scent, shed blood, and other traces.",
+            "The evidence physically remains, but mundane investigators cannot perceive or correctly interpret it.",
+            "The power covers traces created during one scene and does not retroactively conceal evidence from previous scenes."
+          ])
+        ]),
+        L(3, [
+          W(5, "Mask of a Thousand Faces", "Cost: 1 Rouse Check · Roll: Obfuscate + Expression", [
+            "Alter your perceived appearance and identity while remaining visible.",
+            "Successes determine the complexity and credibility of the disguise and its resistance to scrutiny.",
+            "Duration: one scene.",
+            "The actual body remains unchanged. Physical contact may reveal contradictions between real anatomy and the projected appearance."
+          ]),
+          W(6, "Shroud", "Cost: 1 Rouse Check and your full reaction · Roll: Obfuscate + Wits", [
+            "React to danger or another immediate trigger by vanishing from conscious perception and becoming unintelligible to observers.",
+            "You may continue moving without automatically breaking the effect. Taking another action ends the concealment.",
+            "Already initiated attacks can still hit you, and your body remains physically present.",
+            "If no revealing action occurs, the effect lasts until the end of the scene. Successes determine how difficult it is for observers to reacquire awareness of your presence."
+          ])
+        ]),
+        L(4, [
+          W(7, "The Forsaken", "Cost: 2 Rouse Checks · Roll: Obfuscate + Seduction", [
+            "Cause surrounding creatures to disregard one selected victim and the events involving that victim.",
+            "Witnesses may physically perceive the victim but fail to direct normal attention or concern toward their condition.",
+            "Successes determine how disruptive an interaction or injury can become before observers receive renewed opportunities to notice.",
+            "Duration: one minute per success.",
+            "The target is not paralyzed and retains freedom to act."
+          ]),
+          W(8, "The Grey Feast", "Cost: 1 Rouse Check · Roll: Obfuscate + Guile", [
+            "Project an area of diminished attention and curiosity, making detection and investigation more difficult.",
+            "Each success can be allocated to either:",
+            U(["5 meters of effect radius, or", "1 penalty die on detection and investigation rolls within that area."]),
+            "Duration: one scene.",
+            "This version of Grey Feast imposes perceptual and investigative difficulty rather than automatically eliminating emotions or Glamour."
+          ])
+        ]),
+        L(5, [
+          W(9, "The Gift of Absence", "Cost: 1 Rouse Check per dosage per recipient · Roll: None", [
+            "Grant another creature temporary access to Obfuscate powers through your vitae.",
+            "Each dosage grants one sequential Discipline dot, up to Obfuscate 3, without exceeding the donor's own rating.",
+            "Duration: one scene.",
+            "Recipients pay the usual activation costs for their granted powers. When a granted power uses Obfuscate in a roll, the recipient uses the donor's Obfuscate rating."
+          ])
+        ]),
+        L(6, [
+          W(10, "The Unreadable Self", "Type: Passive, always active · Roll when opposed: Obfuscate + Guile", [
+            "Project a false supernatural impression of your identity and make your consciousness difficult to investigate.",
+            "Auspex and comparable abilities may encounter a fabricated psychic identity, including concealed signs of diablerie. Direct mind-reading encounters an inaccessible or blank mental surface.",
+            "Supernatural investigators oppose Obfuscate + Guile.",
+            "A narrow investigative victory reveals that something is concealed or falsified; a greater success margin is necessary to uncover the concealed truth.",
+            "The power requires no activation expenditure."
+          ])
+        ]),
+        L(7, [
+          W(11, "The Missing Yesterday", "Cost: 3 Rouse Checks · Roll: Obfuscate + Intelligence", [
+            "Suppress one coherent subject of knowledge or memory in the minds of witnesses within close range.",
+            "The affected subject may be an event, identity, secret, or body of previously understood information.",
+            "Successes determine the complexity of knowledge suppressed and the strength of the resulting concealment.",
+            "The suppression persists until overcome through extraordinary recollection, supernatural intervention, or comparable means.",
+            "Actual history and physical evidence remain unchanged."
+          ])
+        ]),
+        L(8, [
+          W(12, "The Unwritten Tale", "Cost: 4 Rouse Checks · Roll: Obfuscate + Intelligence", [
+            "Suppress a coherent conceptual category, together with the desire to investigate or understand it, from the collective consciousness of creatures across a vast region.",
+            "The affected area can reach approximately city size.",
+            "Successes determine the concept's depth of suppression and the number of minds affected.",
+            "Duration: one year per success, unless disrupted by powerful supernatural intervention or the collective reconstruction of the lost concept.",
+            "The effect may also weaken the concept's representation within the Dreaming. Physical reality and objective history are unchanged."
+          ])
+        ])
+      ]
+    },
+
+    "Quietus": {
+      desc: "The supernatural judgment of blood: silence, suppression, poison, confiscation, subjugation, degradation, and blood-borne law.",
+      notes: [],
+      levels: [
+        L(1, [
+          W(1, "Silence the Judged", "Cost: 1 Rouse Check · Roll: None", [
+            "Select a vampire within close range. The target's actions and physical interactions cease producing sound.",
+            "The suppression applies to sounds caused by the target's activities, including bodily movement, vocalizations, impacts, and operated equipment.",
+            "Duration: one scene, provided the target remains within the supernatural reach established at activation.",
+            "The effect suppresses sound, not physical damage, force, or other consequences."
+          ]),
+          W(2, "Freeze Blood", "Cost: 1 Rouse Check · Roll: Quietus + Conviction", [
+            "Interrupt a creature's blood functions, particularly supernatural healing and Blood Surge.",
+            T(["Successes", "Effect"], [
+              ["1–2", "Suppress healing for one action"],
+              ["3–4", "Also prevent Blood Surge for the affected interval"],
+              ["5+", "Prolong the suppression through one scene"]
+            ]),
+            "Resisting vampires may oppose the effect."
+          ])
+        ]),
+        L(2, [
+          W(3, "Suppression", "Cost: 1 Rouse Check · Roll: Quietus + Strength", [
+            "Touch a creature to diminish its physical strength or sensory capacity.",
+            "Each success removes 1 die from the relevant physical or sensory action pool, to a minimum of one die.",
+            "Duration: one scene, subject to supernatural resistance.",
+            "The target's capabilities are suppressed rather than permanently destroyed."
+          ]),
+          W(4, "Blood-Coated Weapons", "Cost: 1 Rouse Check per weapon · Roll: No separate activation roll", [
+            "Coat a weapon with vitae so that it can deliver applicable Quietus powers requiring touch.",
+            "The ordinary attack roll determines whether the weapon connects. The delivered power retains its own roll where specified.",
+            "The coating lasts one scene or until the weapon successfully delivers a touch-based Quietus effect, whichever occurs first."
+          ])
+        ]),
+        L(3, [
+          W(5, "Poisoned Blood", "Cost: 2 Rouse Checks · Roll: Quietus + Medicine", [
+            "Introduce supernatural poison into another creature's blood through touch or an applicable weapon.",
+            "Choose immediate or delayed activation.",
+            "Immediate poisoning: Inflict 1 damage point per success.",
+            "Delayed poisoning: Declare an objectively recognizable trigger when applying the poison. Upon triggering, inflict 1 damage point per 2 successes, rounded down, with a minimum of one point on a successful activation.",
+            "The delayed poison dissipates if not triggered within one month. It activates only once.",
+            "Sufficient Auspex can detect the poison before activation."
+          ]),
+          W(6, "Judgment of the Beast", "Cost: 2 Rouse Checks · Roll: Quietus + Passion to provoke, or Quietus + Conviction to repress", [
+            "Touch a creature and concentrate to strengthen or suppress its Beast.",
+            "The roll opposes the target's control over their Beast. Surplus successes determine the force of the provocation or repression.",
+            "The practitioner's Path and Willpower affect the power's strength.",
+            "Significant changes in the target's emotional or supernatural condition can permit renewed resistance."
+          ])
+        ]),
+        L(4, [
+          W(7, "Interdiction", "Cost: 2 Rouse Checks · Roll: Quietus + Conviction", [
+            "Touch another creature and suppress the supernatural expression of one chosen Discipline.",
+            "Each success reduces the target's effective rating in that Discipline by one dot, potentially reducing it to zero.",
+            "Duration: one scene.",
+            "The victim does not forget the Discipline; their blood temporarily loses the ability to express it at its normal level.",
+            "Resisting supernatural creatures may contest the suppression."
+          ]),
+          W(8, "Venomous Spit", "Cost: 2 Rouse Checks · Roll: Quietus + Dexterity", [
+            "Spit supernatural vitae, allowing eligible Quietus touch powers to be delivered at range.",
+            "Maximum effective range is 2 meters per success. The same roll determines contact against an actively defending target.",
+            "The delivered Quietus ability retains its own activation cost and roll when applicable."
+          ])
+        ]),
+        L(5, [
+          W(9, "Blood Leech", "Cost: 3 Rouse Checks · Roll: Quietus + Conviction", [
+            "Extract usable blood from another creature through physical contact.",
+            "Drain one usable blood unit per success, subject to the target's available blood and applicable resistance.",
+            "Blood reaches the vampire directly and remains subject to normal feeding and supernatural assimilation restrictions."
+          ]),
+          W(10, "Soul in the Blade", "Cost: 3 Rouse Checks · Roll: None", [
+            "Use a blade or stake to perform delayed diablerie, capturing the victim's soul in the weapon at the moment of a valid final act of diablerie or destruction.",
+            "Merely wounding a vampire does not capture their soul.",
+            "The weapon can contain one soul at a time. The wielder may consume the soul later, experiencing the ordinary benefits and consequences of diablerie.",
+            "Destroying the weapon releases or destroys the imprisoned essence according to its supernatural condition."
+          ])
+        ]),
+        L(6, [
+          W(11, "Blood of the Judge", "Cost: Increase Hunger directly by 2 per application · Roll: Quietus + Willpower", [
+            "Through touch, transfer your vitae into another creature's body.",
+            "Once introduced, the blood can forcibly establish a blood bond or inflict aggravated damage from within.",
+            "Successes determine the imposed bond's strength or the damage dealt. The destructive application inflicts 1 aggravated damage per success.",
+            "The victim may oppose the intrusion through supernatural resistance.",
+            "The implanted vitae also creates a blood connection usable by higher Quietus powers until it is expelled, destroyed, or assimilated by the subject's supernatural processes."
+          ])
+        ]),
+        L(7, [
+          W(12, "Blood Made Lesser", "Cost: 4 Rouse Checks · Roll: Quietus + Willpower", [
+            "Reduce the supernatural potency associated with a vampire's Generation.",
+            "Each surplus success weakens the target's effective generational potency by one step.",
+            "Because smaller numerical Generations normally indicate more potent blood, this degradation increases the target's effective Generation number, without changing their actual ancestry.",
+            "Duration: one night per surplus success.",
+            "Permanent changes require a separate exceptional ritual or story-level supernatural consequence."
+          ])
+        ]),
+        L(8, [
+          W(13, "Law Written in Blood", "Cost: Increase Hunger directly by 5 · Roll: Quietus + Conviction", [
+            "Impose a supernatural law upon a creature carrying the judge's vitae.",
+            "The law may require or forbid particular conduct and must have an objectively recognizable condition for violation.",
+            "The victim remains consciously free to disobey. Their carried vitae enforces the law through damage or other supernatural penalties.",
+            "Each surplus success determines 1 aggravated damage or an equivalent degree of blood suppression inflicted when the law is broken.",
+            "The judge may spend 2 Will for +1 automatic success, repeated as many times as available Will permits.",
+            "The sentence remains active while the judge's vitae persists inside the recipient. Each distinct violation can trigger punishment, but one continuing violation cannot be counted repeatedly as several separate infractions.",
+            "Replacing or renewing the law requires another activation and payment."
+          ])
+        ])
+      ]
+    }
+
+  };
+
+  window.DISCIPLINE_LONG = DISCIPLINE_LONG;
+})();
+</script>
+
+<script>
 (function () {
   "use strict";
 
@@ -1391,7 +2206,9 @@
     var row = el("div", "stat");
     row.dataset.pool = pool; row.dataset.key = key;
     var meta = el("div", "meta");
-    meta.appendChild(el("div", "name", key));
+    var nameEl = el("div", "name", key);
+    if (pool === "disciplines" && discHasInfo(key)) nameEl.appendChild(makeDiscInfoBtn(key));
+    meta.appendChild(nameEl);
     if (desc) meta.appendChild(el("div", "desc", desc));
     row.appendChild(meta);
 
@@ -1718,6 +2535,7 @@
     if (pathLbl) pathLbl.textContent = pathNameInput.value.trim() || "Clan Path";
     // The glossary lights up the dots you own, so keep it current while it's on screen.
     if (glossaryPage && !glossaryPage.hidden) renderGlossary();
+    renderDiscPop();
   }
   updateRail();
 
@@ -1911,8 +2729,28 @@
     return e;
   }
 
+  // One block of a power's text: a paragraph, a bullet list, or a small table.
+  function glBlock(bl) {
+    if (typeof bl === "string") return glMake("p", "gl-pt", bl);
+    if (bl.list) {
+      var ul = glMake("ul", "gl-pl");
+      bl.list.forEach(function (t) { ul.appendChild(glMake("li", null, t)); });
+      return ul;
+    }
+    var wrap = glMake("div", "gl-tw"), tb = glMake("table", "gl-table"), tr = glMake("tr");
+    bl.table.head.forEach(function (h) { tr.appendChild(glMake("th", null, h)); });
+    tb.appendChild(tr);
+    bl.table.rows.forEach(function (r) {
+      var row = glMake("tr");
+      r.forEach(function (c) { row.appendChild(glMake("td", null, c)); });
+      tb.appendChild(row);
+    });
+    wrap.appendChild(tb);
+    return wrap;
+  }
+
   function renderGlossary() {
-    var G = window.DISCIPLINE_GLOSSARY;
+    var G = window.DISCIPLINE_LONG;
     glTiles.textContent = ""; glPage.textContent = "";
     if (!G) { glPage.appendChild(glMake("p", "gl-desc", "The glossary couldn't load. Try refreshing the page.")); return; }
     var names = Object.keys(G);
@@ -1932,7 +2770,8 @@
 
     var own2 = glDots(glSel);
     glPage.appendChild(glMake("h2", "gl-name", glSel));
-    glPage.appendChild(glMake("p", "gl-desc", (DISCIPLINE_DESC[glSel] || "") + (own2 ? " You have " + own2 + (own2 === 1 ? " dot." : " dots.") : "")));
+    glPage.appendChild(glMake("p", "gl-desc", G[glSel].desc + (own2 ? " You have " + own2 + (own2 === 1 ? " dot." : " dots.") : "")));
+    G[glSel].notes.forEach(function (t) { glPage.appendChild(glMake("p", "gl-note", t)); });
     G[glSel].levels.forEach(function (lv) {
       var sec = glMake("div", "gl-sec" + (lv.dot <= own2 ? " own" : ""));
       var box = glMake("div", "gl-box");
@@ -1945,14 +2784,114 @@
       lv.powers.forEach(function (p) {
         var pw = glMake("div", "gl-pw");
         pw.appendChild(glMake("p", "gl-pn", p.name));
-        pw.appendChild(glMake("p", "gl-pm", glCost(p.cost) + (p.roll ? " · " + glRoll(p.roll) : "")));
-        pw.appendChild(glMake("p", "gl-pt", p.text));
+        pw.appendChild(glMake("p", "gl-pm", p.meta));
+        p.blocks.forEach(function (bl) { pw.appendChild(glBlock(bl)); });
         body.appendChild(pw);
       });
       sec.appendChild(box); sec.appendChild(body);
       glPage.appendChild(sec);
     });
   }
+
+  // ---- Discipline "i" popover: the short text of every dot the character owns ----
+  var discPop = null, discBtn = null, discKey = null, discPinned = false, discTimer = 0;
+
+  function discHasInfo(key) { return !!(window.DISCIPLINE_GLOSSARY && window.DISCIPLINE_GLOSSARY[key]); }
+
+  function makeDiscInfoBtn(key) {
+    var b = glMake("button", "disc-info", "i");
+    b.type = "button";
+    b.setAttribute("aria-label", key + " powers");
+    b.setAttribute("aria-expanded", "false");
+    b.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (discBtn === b && discPop && !discPop.hidden && discPinned) { closeDiscPop(); return; }
+      openDiscPop(b, key, true);
+    });
+    b.addEventListener("mouseenter", function () {
+      if (window.matchMedia && window.matchMedia("(hover: hover)").matches) openDiscPop(b, key, discPinned && discBtn === b);
+    });
+    b.addEventListener("mouseleave", scheduleDiscClose);
+    return b;
+  }
+
+  // The short list drops a leading "The"; show the full name from the long list so both views agree.
+  function longPowerName(key, dot, p) {
+    var L = window.DISCIPLINE_LONG && window.DISCIPLINE_LONG[key], name = p.name;
+    if (L) L.levels.forEach(function (lv) { if (lv.dot === dot) lv.powers.forEach(function (q) { if (q.n === p.n) name = q.name; }); });
+    return name;
+  }
+
+  function openDiscPop(btn, key, pinned) {
+    clearTimeout(discTimer);
+    if (discBtn && discBtn !== btn) discBtn.setAttribute("aria-expanded", "false");
+    if (!discPop) {
+      discPop = glMake("div", "disc-pop");
+      discPop.setAttribute("role", "dialog");
+      discPop.hidden = true;
+      discPop.addEventListener("mouseenter", function () { clearTimeout(discTimer); });
+      discPop.addEventListener("mouseleave", scheduleDiscClose);
+      document.body.appendChild(discPop);
+    }
+    discBtn = btn; discKey = key; discPinned = !!pinned;
+    btn.setAttribute("aria-expanded", "true");
+    discPop.hidden = false;
+    renderDiscPop();
+  }
+
+  function closeDiscPop() {
+    clearTimeout(discTimer);
+    if (discPop) discPop.hidden = true;
+    if (discBtn) discBtn.setAttribute("aria-expanded", "false");
+    discBtn = null; discKey = null; discPinned = false;
+  }
+
+  function scheduleDiscClose() {
+    clearTimeout(discTimer);
+    if (discPinned) return;
+    discTimer = setTimeout(closeDiscPop, 160);
+  }
+
+  function renderDiscPop() {
+    if (!discPop || discPop.hidden) return;
+    if (!discBtn || !document.body.contains(discBtn)) { closeDiscPop(); return; }
+    var G = window.DISCIPLINE_GLOSSARY[discKey];
+    var own = Math.min(glDots(discKey), DOTS_SHOWN);
+    discPop.textContent = "";
+    discPop.appendChild(glMake("p", "dp-title", discKey + (own ? " · " + own + (own === 1 ? " dot" : " dots") : "")));
+    if (!own) discPop.appendChild(glMake("p", "dp-empty", "No dots yet."));
+    G.levels.forEach(function (lv) {
+      if (lv.dot > own) return;
+      var d = glMake("div", "dp-lv");
+      d.appendChild(glMake("p", "dp-dots", new Array(lv.dot + 1).join("●")));
+      lv.powers.forEach(function (p) {
+        d.appendChild(glMake("p", "dp-pn", longPowerName(discKey, lv.dot, p)));
+        d.appendChild(glMake("p", "dp-pm", glCost(p.cost) + (p.roll ? " · " + glRoll(p.roll) : "")));
+        d.appendChild(glMake("p", "dp-pt", p.text));
+      });
+      discPop.appendChild(d);
+    });
+    positionDiscPop();
+  }
+
+  function positionDiscPop() {
+    var r = discBtn.getBoundingClientRect(), w = discPop.offsetWidth, h = discPop.offsetHeight;
+    var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    var left = Math.max(12, Math.min(r.left, vw - w - 12));
+    var top = r.bottom + 8;
+    if (top + h > vh - 8 && r.top - h - 8 > 8) top = r.top - h - 8; // flip above when there is no room below
+    discPop.style.left = (left + window.pageXOffset) + "px";
+    discPop.style.top = (top + window.pageYOffset) + "px";
+  }
+
+  document.addEventListener("click", function (ev) {
+    if (discPop && !discPop.hidden && !discPop.contains(ev.target)) closeDiscPop();
+  });
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && discPop && !discPop.hidden) { var b = discBtn; closeDiscPop(); if (b) b.focus(); }
+  });
+  window.addEventListener("resize", function () { if (discPop && !discPop.hidden) closeDiscPop(); });
+  window.addEventListener("kindred:view", function () { closeDiscPop(); });
 
   glTiles.addEventListener("click", function (ev) {
     var b = ev.target.closest(".gl-tile");
