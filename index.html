@@ -481,7 +481,11 @@
   .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--gold-bright); }
   .tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   .header-tools { display: flex; gap: 8px; padding: 6px 0; }
-  body.view-notes #descToggle, body.view-health #descToggle { display: none; }
+  body.view-notes #descToggle, body.view-health #descToggle, body.view-glossary #descToggle { display: none; }
+  @media (max-width: 560px) { /* four tabs have to fit a phone: shorten the first and tighten the rest */
+    .tab-long { display: none; }
+    .tab { padding: 14px 9px 11px; letter-spacing: 0.1em; }
+  }
 
   /* ---------- Health page: the pin doll ---------- */
   .health-card { margin-top: 28px; }
@@ -534,6 +538,49 @@
   .dmg-regions li b { color: var(--blood-strong); }
   .dmg-regions li.none { justify-content: center; font-style: italic; color: var(--ink-muted); }
   .rail-chip.dmg .num { color: var(--blood-strong); }
+
+  /* ---------- Glossary page ---------- */
+  .gl-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 28px 0 18px; }
+  .gl-tile {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 13px; text-align: left; cursor: pointer;
+    font-family: var(--serif); font-size: 1rem; font-weight: 700; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 3px;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .gl-tile:hover { border-color: var(--blood); }
+  .gl-tile.on { border-color: var(--blood); background: color-mix(in srgb, var(--blood) 8%, var(--surface)); }
+  .gl-tile:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .gl-tile .pips { font-family: var(--ui); font-size: 0.62rem; letter-spacing: 2px; min-height: 0.95rem; color: var(--blood-strong); font-weight: 400; }
+  .gl-page { margin-top: 0; }
+  .gl-name { font-family: var(--serif); font-size: 1.6rem; font-weight: 700; margin: 0 0 4px; color: var(--ink); }
+  .gl-desc { font-style: italic; color: var(--ink-muted); margin: 0 0 12px; font-size: 0.96rem; }
+  .gl-sec { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-top: 1px solid var(--line-soft); }
+  .gl-box {
+    align-self: stretch; display: flex; align-items: center; justify-content: center; padding: 10px 4px;
+    border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface-2);
+  }
+  .gl-pips { --pip: 14px; --cols: 5; display: grid; grid-template-columns: repeat(var(--cols), var(--pip)); gap: 6px; }
+  .gl-pip { width: var(--pip); height: var(--pip); border-radius: 50%; background: color-mix(in srgb, var(--ink-muted) 45%, transparent); }
+  .gl-sec.own .gl-box { border-color: color-mix(in srgb, var(--blood) 45%, var(--line-soft)); background: color-mix(in srgb, var(--blood) 8%, var(--surface-2)); }
+  .gl-sec.own .gl-pip {
+    background: radial-gradient(circle at 35% 30%, var(--blood-strong), var(--blood) 70%);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--blood) 35%, transparent);
+  }
+  .gl-pw { margin: 0 0 18px; padding-left: 14px; border-left: 3px solid var(--line); }
+  .gl-pw:last-child { margin-bottom: 0; }
+  .gl-pn { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; margin: 0 0 2px; color: var(--ink-muted); }
+  .gl-pm { font-family: var(--ui); font-size: 0.78rem; margin: 0 0 6px; color: var(--ink-muted); }
+  .gl-pt { font-size: 0.98rem; line-height: 1.7; margin: 0; color: var(--ink-muted); }
+  .gl-sec.own .gl-pw { border-left-color: var(--blood); }
+  .gl-sec.own .gl-pn { color: var(--blood-strong); }
+  .gl-sec.own .gl-pm { color: var(--ink-soft); }
+  .gl-sec.own .gl-pt { color: var(--ink); }
+  @media (max-width: 560px) { /* phones: the dot box sits above its powers so the text keeps the full width */
+    .gl-page { padding: 20px 16px 22px; }
+    .gl-sec { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px 0; }
+    .gl-box { justify-self: start; align-self: start; padding: 10px 12px; }
+    .gl-pips { --pip: 12px; gap: 5px; }
+  }
 
   /* ---------- Notes page ---------- */
   .notes-card { margin-top: 28px; }
@@ -592,9 +639,10 @@
 <nav class="topbar" id="topbar" aria-label="Pages">
   <div class="topbar-in">
     <div class="tabs" role="tablist">
-      <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true">Character Sheet</button>
+      <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true"><span class="tab-long">Character </span>Sheet</button>
       <button class="tab" id="tabHealth" type="button" role="tab" data-view="health" aria-selected="false">Health</button>
       <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
+      <button class="tab" id="tabGlossary" type="button" role="tab" data-view="glossary" aria-selected="false">Glossary</button>
     </div>
     <div class="header-tools">
       <button class="theme-toggle" id="descToggle" type="button">Show details</button>
@@ -653,6 +701,10 @@
         </aside>
       </div>
     </section>
+  </div>
+  <div id="glossaryPage" hidden>
+    <div class="gl-tiles" id="glTiles" role="group" aria-label="Disciplines"></div>
+    <section class="card gl-page" id="glPage"></section>
   </div>
   <div id="notesPage" hidden>
     <section class="card notes-card">
@@ -837,6 +889,311 @@
     <div class="dice-results" id="diceResults" aria-live="polite"></div>
   </div>
 </div>
+
+<script>
+// ---- Discipline glossary data (read by the Glossary tab) ----
+(function () {
+  // Discipline glossary data, embedded in index.html and read by the Glossary tab.
+  // Source: the "final full list" of 8 disciplines.
+  //
+  // Shape:  DISCIPLINE_GLOSSARY[discipline] = { abbr, levels: [ { dot, powers: [ power ] } ] }
+  //   power = { n, name, cost, roll, text }
+  //     n:     running number within the discipline (1..N)
+  //     name:  power name as written
+  //     cost:  the cost code exactly as written in the list, e.g. "1R", "2R", "3R+", "1-5R", "F", "P",
+  //            "1R + full reaction", "1R per recipient per dot"
+  //     roll:  the dice-pool code exactly as written, e.g. "Pot+Str", "Normal Str roll", or null where the list shows "-"
+  //     text:  the description exactly as written
+  //
+  // Wording is as supplied. The codes are NOT expanded here; see GLOSSARY_LEGEND for what they stand for.
+
+  function pw(n, name, cost, roll, text) { return { n: n, name: name, cost: cost, roll: roll, text: text }; }
+  function dotLevel(dot, powers) { return { dot: dot, powers: powers }; }
+
+  // What the shorthand in the list means. Marked (inferred) where the list itself never spells it out.
+  var GLOSSARY_LEGEND = {
+    cost: {
+      R: "Rouse Check",
+      F: "Free",
+      P: "Passive (always active)",
+      H: null // used on two Quietus powers; not explained in the list (Health? Hunger?)
+    },
+    stats: { // (inferred) from the character sheet's own Attributes and Abilities
+      Str: "Strength", Dex: "Dexterity", Wit: "Wits", Int: "Intelligence", Pas: "Passion", Cnv: "Conviction",
+      Ath: "Athletics", Brw: "Brawl", Crf: "Craft", Emp: "Empathy", Exp: "Expression", Gui: "Guile",
+      Occ: "Occult", Med: "Medicine", Sth: "Stealth",
+      Sed: "Seduction", // NOT an ability on the character sheet
+      Wil: "Willpower", Will: "Willpower"
+    },
+    disciplines: {
+      Pot: "Potence", Cel: "Celerity", Pre: "Presence", Dom: "Dominate",
+      Aus: "Auspex", Obt: "Obtenebration", Obf: "Obfuscate", Qui: "Quietus"
+    }
+  };
+
+  var DISCIPLINE_GLOSSARY = {
+
+    "Potence": { abbr: "Pot", levels: [
+      dotLevel(1, [
+        pw(1, "Strengthened Blood Surge", "1R", "Normal Str roll", "+2 dice to Strength Blood Surge."),
+        pw(2, "Intercepting Hand", "1R", "Pot+Str", "Catch, stop, or redirect one incoming physical impact; successes counter force.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Deliberate Hardening", "1R", "Pot+Str", "Reactive; reduce incoming damage by 1 per success. Must anticipate attack; no repeated defense before next opportunity."),
+        pw(4, "Penetrating Shockwave", "1R", "Pot+Ath", "Strike through target; allocate successes to displacement (1m each) or secondary impact (1 each).")
+      ]),
+      dotLevel(3, [
+        pw(5, "Impossible Implements", "1R", "Pot+Str", "On Strength Blood Surge, wield oversized or awkward objects; successes govern mass and handling."),
+        pw(6, "Crushing Entrapment", "1R", "Pot+Ath", "Break objects embedded in your flesh; suffer +1 Health for +2 dice, repeatable.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Shape the Unyielding", "1R", "Pot+Crf", "Permanently reshape hard material by hand; successes determine mass and hardness."),
+        pw(8, "Burden of Impact", "1R", null, "Suffer full damage, store impact; next Strength action gains bonus dice equal to damage suffered (max Pot). Failure to discharge: +1 Health per 2 stored dice.")
+      ]),
+      dotLevel(5, [
+        pw(9, "Distant Fist", "2R", "Pot+Str", "Remote punch; 3m range per success; same roll resolves attack."),
+        pw(10, "Supreme Physical Mastery", "2R", "Normal Ath/Brw", "+2 automatic successes on Blood-Surged Athletics or Brawl.")
+      ]),
+      dotLevel(6, [
+        pw(11, "Conducted Strength", "2R", "Pot+Brw/Ath", "Transmit force through connected matter; 1m travel or 1 structural resistance per success."),
+        pw(12, "Repeated Momentum", "2R", "Pot+Pas", "Repeat a completed impact once per 2 successes (minimum once); resolve before next action.")
+      ]),
+      dotLevel(7, [
+        pw(13, "Nullification of Force", "2R", "Pot+Str", "Allocate successes between area radius (m) and force reduction; active, brief protection."),
+        pw(14, "Grasp the Ungraspable", "2R", "Pot+Str", "Physically seize wind, currents, etc.; magnitude by successes while engaged."),
+        pw(15, "Transcendent Blood Surge", "P", "Normal Str roll", "+2 automatic successes on Strength Blood Surge; stacks with dot-5 bonus.")
+      ]),
+      dotLevel(8, [
+        pw(16, "Weight of the Earth", "3R", "Pot+Str", "While grounded, channel impacts into earth or borrow its inertia; scale by successes.")
+      ])
+    ] },
+
+    "Celerity": { abbr: "Cel", levels: [
+      dotLevel(1, [
+        pw(1, "First Instant", "1R", "Dex+Wit", "+Cel dice to initiative; first action resolves before slower opponents can respond."),
+        pw(2, "Accelerated Blood Surge", "1R", "Normal Dex roll", "+2 dice to Dexterity Blood Surge, excluding initiative.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Redirect Momentum", "1R", "Cel+Dex", "Change contacted moving target's trajectory; critical may reverse it."),
+        pw(4, "Instantaneous Step", "F", "Cel+relevant Ability", "Replace normal Attribute with Celerity for immediate steps, dodges, or gestures.")
+      ]),
+      dotLevel(3, [
+        pw(5, "Blink", "1R", "Cel+Str", "Near-instant movement along traversable path, up to 3m/success."),
+        pw(6, "Instantaneous Action", "1R", "Normal pool + Cel dice", "Each success on added Cel dice subtracts 1 die from active defense; one action only.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Impossible Running", "1R", "Cel+Ath", "Run on walls, water, ceilings; successes govern difficult surfaces and transitions."),
+        pw(8, "Expanded Immediate Reach", "P", null, "Reach = 2m × Cel; freely reposition within reach during an action.")
+      ]),
+      dotLevel(5, [
+        pw(9, "Compression of Action", "2R", "Separate normal rolls", "Perform up to Cel actions in one interval; first failed roll stops the sequence; no repeated action against same opponent unless ordinarily permitted."),
+        pw(10, "Gift of Speed", "1R per recipient per dot", null, "Grant Cel 1–3 sequentially through blood; one scene; recipient pays ordinary costs.")
+      ]),
+      dotLevel(6, [
+        pw(11, "Catastrophic Velocity", "2R", "Cel+Ath", "Create friction fires, sonic booms, vibration, resonance; magnitude by successes.")
+      ]),
+      dotLevel(7, [
+        pw(12, "Master of Positions", "2R", "Cel+Cnv", "Reposition one creature/object per success and impart motion; contested if resisted.")
+      ]),
+      dotLevel(8, [
+        pw(13, "Sovereignty of Motion", "3R", "Cel+Int", "Redistribute inertia, vent excess motion into surroundings; extraordinary magnitude possible on high rolls.")
+      ])
+    ] },
+
+    "Presence": { abbr: "Pre", levels: [
+      dotLevel(1, [
+        pw(1, "Fascination", "1R", "Pre+Pas", "Draw focused emotional attention; one scene; success magnitude determines fascination."),
+        pw(2, "Suggestion", "1R", "Pre+Cnv", "Amplify your existing emotion and project it onto observers focused on you; one scene.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Emotional Creation", "1R", "Pre+Cnv", "Create any emotion in a fascinated target; one scene or until overwhelmed."),
+        pw(4, "Savor Feelings", "P", "Normal Insight/Emp roll", "+2 dice when Blood Surge enhances Insight or Empathy.")
+      ]),
+      dotLevel(3, [
+        pw(5, "Yearning", "1R", "Pre+Pas", "Establish lasting attachment or longing; 1 night/success; resisted by Will."),
+        pw(6, "Leech Emotion", "1R", "Pre+Cnv", "Touch to extract emotion; 1 stored charge/success, max Pre; each charge +1 die to related Presence roll; expires sunset.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Herald of Passion", "2R", "Pre+Crf", "Embed Presence in visual symbols; lasts 1 month/success.")
+      ]),
+      dotLevel(5, [
+        pw(8, "Living Song", "2R", "Pre+Exp", "Embed Presence in text, tales, poetry, or songs; lasts 1 year/success; faithful reproductions transmit it.")
+      ]),
+      dotLevel(6, [
+        pw(9, "Forbidden Passion", "2R", "Pre+Cnv", "Suppress specific emotion in fascinated subjects; 1 scene/success."),
+        pw(10, "Crimson Sanctuary", "3R+", "Pre+Cnv", "Enclose territory with blood, imposing chosen Presence effect; +1R per major additional structure; 1 night/success.")
+      ]),
+      dotLevel(7, [
+        pw(11, "Ancestral Passion", "3R", "Pre+Gui", "Imprint triggered emotional response on lineage/genus; lasts decades, possibly generations.")
+      ]),
+      dotLevel(8, [
+        pw(12, "Avatar of Passion", "3R", "Pre+Cnv", "Become incorporeal emotional avatar; 1–2 successes unstable, 3–4 controlled, 5+ strongly controlled. Specific avatar is plot-defined.")
+      ])
+    ] },
+
+    "Dominate": { abbr: "Dom", levels: [
+      dotLevel(1, [
+        pw(1, "Commanding Word", "1R", "Dom+Cnv", "Spoken immediate command through eye contact; obeyed next opportunity.")
+      ]),
+      dotLevel(2, [
+        pw(2, "Stolen Memory", "1R", "Dom+Int", "Alter/remove/fabricate memories; roughly one coherent detail or segment/success.")
+      ]),
+      dotLevel(3, [
+        pw(3, "Sleeping Command", "1R", "Dom+Gui", "Triggered order; 1 month/success dormant; extra successes allow conditions/exceptions."),
+        pw(4, "Piercing Gaze", "P", null, "+2 dice to Dominate against strongly distracted victim while maintaining eye contact.")
+      ]),
+      dotLevel(4, [
+        pw(5, "Borrowed Body", "2R", "Dom+Cnv", "Possess creature; mortal: 1 scene/success; resisting supernatural vessel: 1 scene; original body vulnerable."),
+        pw(6, "Crimson Mandate", "1R+", "Relevant Dom roll", "Touch to Dominate immortals; +1 die per extra R, up to Dom bonus dice; vampires +2 defense dice against lasting commands/memory changes.")
+      ]),
+      dotLevel(5, [
+        pw(7, "Chain of Command", "2R", "Dom+Cnv", "Command hierarchy, 1 level or branch/success; 1 month/success.")
+      ]),
+      dotLevel(6, [
+        pw(8, "Binding Word", "2R", "Dom+Cnv", "Oaths/contracts enforce continued obedience; 1 year/success.")
+      ]),
+      dotLevel(7, [
+        pw(9, "Invading Sovereign", "3R", "Dom+Wil", "Remote mental entry, command or possession via established bond; same realm."),
+        pw(10, "Forbidden Choice", "3R", "Dom+Wil", "Remove voluntary capacity for specified class of decisions; 1 month/success.")
+      ]),
+      dotLevel(8, [
+        pw(11, "Eternal Throne", "3R", "Dom+Cnv", "Bind command to an institution/office, inheritable by successors; renew for 3R yearly.")
+      ])
+    ] },
+
+    "Auspex": { abbr: "Aus", levels: [
+      dotLevel(1, [
+        pw(1, "Aura Reading", "1R", "Aus+Emp", "1 success: dominant emotion; 2–3: supernatural traits; 4–5+: deep spiritual secrets."),
+        pw(2, "Patient Observer", "P", "Normal Investigation roll", "+2 dice when Blood Surge enhances investigation in calm environment.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Spirit's Touch", "1R", "Aus+Int", "Touch object, read psychic history; more successes reveal deeper/weaker/older impressions."),
+        pw(4, "Bestowed Senses", "1R", "Aus+Emp", "Share another creature's senses; range/channels by successes; one scene.")
+      ]),
+      dotLevel(3, [
+        pw(5, "Telepathy", "1R", "Aus+Int", "Read thoughts or communicate mentally; surface thoughts on basic success, deeper content with greater success."),
+        pw(6, "Sixth Sense", "1R", "Aus+Occ", "Detect active magic/spellcasting and nearby supernatural disturbances; specificity by successes.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Piercing Sight", "2R", "Aus+Emp/Occ", "Expose illusions and supernatural concealment; narrow victory detects falsehood, higher margin reveals truth."),
+        pw(8, "Premonition", "2R", "Aus+Occ", "Intuitive, nonvisual hints of possible events in current scene or next night.")
+      ]),
+      dotLevel(5, [
+        pw(9, "Astral Projection", "2R", "Aus+Cnv", "Travel as projected consciousness; distance/duration by successes; body vulnerable."),
+        pw(10, "Threshold Sight", "2R", "Aus+Occ", "Detect gateways to Abyss, Dreaming, Umbra, etc.; learn opening conditions by successes.")
+      ]),
+      dotLevel(6, [
+        pw(11, "Unveiled Mechanism", "2R", "Aus+Occ", "Identify how supernatural effects function; one meaningful component/weakness per success.")
+      ]),
+      dotLevel(7, [
+        pw(12, "Witness of Ages", "3R", "Aus+Int", "Relive authentic past through psychic connection; depth/completeness by successes; cannot change history.")
+      ]),
+      dotLevel(8, [
+        pw(13, "Fourth-Dimensional Eye", "3R", "Aus+Int", "Perceive branching futures; select possible short-term outcomes; longer horizons risk profound psychological trauma.")
+      ])
+    ] },
+
+    "Obtenebration": { abbr: "Obt", levels: [
+      dotLevel(1, [
+        pw(1, "Shadowmeld", "1R", "Obt+Dex for manipulation", "Enter actual cast shadow; move within it, interact through boundaries."),
+        pw(2, "Eyes of Darkness", "P", null, "See in absolute darkness."),
+        pw(3, "Edge of Night", "1R", "Obt+Crf", "Forge blade from shadow; successes set weapon quality once; attacks Dex+Melee; lasts scene.")
+      ]),
+      dotLevel(2, [
+        pw(4, "Black Road", "1R", "Obt+Ath", "Move along connected cast shadows; 5m/success."),
+        pw(5, "Shadow Marriage", "1R", "Obt+Str against transmitted harm", "Bind overlapping shadows permanently at any distance; resist transmitted damage −1/success; sever only by touching partner's shadow.")
+      ]),
+      dotLevel(3, [
+        pw(6, "Devour Light", "1R", "Obt+Gui", "Extinguish light sources or expand supernatural darkness by successes; one scene."),
+        pw(7, "First Guest", "1R", "Obt+Wil", "Summon independent Abyssal entity; success determines initial control, not lasting obedience."),
+        pw(8, "Shadow Arms", "1R", "Obt+Brw", "Extend own arms into shadow tentacles for grappling/striking; reach/power by successes; one scene.")
+      ]),
+      dotLevel(4, [
+        pw(9, "Black Metamorphosis", "2R", "Obt+Wil", "Merge with Abyssal entity, assume monstrous form; successes determine retained control; one scene.")
+      ]),
+      dotLevel(5, [
+        pw(10, "Hollow Margin", "2R", "Obt+Int", "Open Abyssal pocket-space; internal volume by successes; one scene; Abyssal hazards possible.")
+      ]),
+      dotLevel(6, [
+        pw(11, "Black Reliquary", "3R", "Obt+Wil", "Imbue object or creature with Abyssal entity; objects can persist, living vessels deteriorate.")
+      ]),
+      dotLevel(7, [
+        pw(12, "Unlit Gate", "3R", "Obt+Cnv", "Exile resisting target within supernatural reach into Abyss; escape difficulty by successes.")
+      ]),
+      dotLevel(8, [
+        pw(13, "Shadow of What Was", "3R", "Obt+Int", "Summon distorted Abyssal remnant of destroyed being/object/place; magnitude/fidelity by successes; control Obt+Wil; one scene.")
+      ])
+    ] },
+
+    "Obfuscate": { abbr: "Obf", levels: [
+      dotLevel(1, [
+        pw(1, "Averted Gaze", "1R", "Obf+Int", "Become imperceptible while refusing to pay attention to others; interaction reveals you; one scene."),
+        pw(2, "Cache", "1–5R", "Obf+Sth", "Hide objects/locations: smaller than room 1R/1 success; room 2; building 3; neighborhood 4; town 5. Duration 1 scene/success.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Cloud Judgment", "1R", "Obf+Gui", "One opponent struggles to act against you while you concentrate; one scene; direct threat permits new resistance."),
+        pw(4, "Untraced", "1R", "Obf+Sth", "Conceal tracks, scent, spilled blood, etc. created this scene; traces physically remain.")
+      ]),
+      dotLevel(3, [
+        pw(5, "Mask of a Thousand Faces", "1R", "Obf+Exp", "Change perceived appearance, not physical body; one scene."),
+        pw(6, "Shroud", "1R + full reaction", "Obf+Wit", "Vanish when threatened; moving maintains concealment, other actions break it; incoming attacks still hit; one scene maximum.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Forsaken", "2R", "Obf+Sed", "Others disregard one target and events involving them; 1 minute/success; disruptive actions may break effect."),
+        pw(8, "Grey Feast", "1R", "Obf+Gui", "Allocate successes to 5m radius or −1 die to investigation/detection; one scene.")
+      ]),
+      dotLevel(5, [
+        pw(9, "Gift of Absence", "1R per dosage/recipient", null, "Share blood to grant Obfuscate 1–3 sequentially; one scene; recipient pays normal activation costs and uses donor's Obf rating.")
+      ]),
+      dotLevel(6, [
+        pw(10, "Unreadable Self", "P", "Obf+Gui when contested", "False supernatural identity, concealed diablerie and blocked mind-reading; stronger Auspex may pierce.")
+      ]),
+      dotLevel(7, [
+        pw(11, "Missing Yesterday", "3R", "Obf+Int", "Suppress specific memories/knowledge among witnesses within close range; persists until overcome.")
+      ]),
+      dotLevel(8, [
+        pw(12, "Unwritten Tale", "4R", "Obf+Int", "Suppress an entire concept and desire to understand it across up to city scale; 1 year/success; may wound Dreaming.")
+      ])
+    ] },
+
+    "Quietus": { abbr: "Qui", levels: [
+      dotLevel(1, [
+        pw(1, "Silence the Judged", "1R", null, "Silence all sounds caused by target vampire's actions within close range; one scene while within reach."),
+        pw(2, "Freeze Blood", "1R", "Qui+Cnv", "1–2 successes: block healing for an action; 3–4: also block Blood Surge; 5+: one scene.")
+      ]),
+      dotLevel(2, [
+        pw(3, "Suppression", "1R", "Qui+Str", "Touch to reduce Strength or senses by −1 die/success (minimum 1); one scene."),
+        pw(4, "Blood-Coated Weapons", "1R per weapon", null, "Deliver touch-based Quietus through weapon; lasts scene or first successful Quietus delivery.")
+      ]),
+      dotLevel(3, [
+        pw(5, "Poisoned Blood", "2R", "Qui+Med", "Touch to inflict 1 damage/success immediately, or delayed 1 damage per 2 successes; declared trigger; dissipates after month."),
+        pw(6, "Judgment of the Beast", "2R", "Qui+Pas / Qui+Cnv", "Touch to provoke (Pas) or repress (Cnv) the Beast, opposed; Path/Willpower strengthen it.")
+      ]),
+      dotLevel(4, [
+        pw(7, "Interdiction", "2R", "Qui+Cnv", "Touch to reduce one target Discipline by 1 effective dot/success; one scene."),
+        pw(8, "Venomous Spit", "2R", "Qui+Dex", "Spit to deliver touch Quietus; reach 2m/success; delivered power pays own cost.")
+      ]),
+      dotLevel(5, [
+        pw(9, "Blood Leech", "3R", "Qui+Cnv", "Drain one blood unit/success through touch."),
+        pw(10, "Soul in the Blade", "3R", null, "Trap soul at valid final diablerie/destruction via weapon; store one soul, consume later with usual effects.")
+      ]),
+      dotLevel(6, [
+        pw(11, "Blood of the Judge", "2H", "Qui+Wil", "Inject own vitae by touch; impose forced blood bond or inflict 1 aggravated damage/success; establishes blood conduit.")
+      ]),
+      dotLevel(7, [
+        pw(12, "Blood Made Lesser", "4R", "Qui+Wil", "Weaken generational Blood Potency by 1 step/surplus success; effective Generation increases; 1 night/surplus success.")
+      ]),
+      dotLevel(8, [
+        pw(13, "Law Written in Blood", "5H", "Qui+Cnv", "Impose rule upon creature carrying your vitae; violation causes 1 aggravated damage or equivalent suppression/surplus success. Spend 2 Will for +1 automatic success, repeatable.")
+      ])
+    ] }
+
+  };
+
+  window.DISCIPLINE_GLOSSARY = DISCIPLINE_GLOSSARY;
+  window.GLOSSARY_LEGEND = GLOSSARY_LEGEND;
+})();
+</script>
 
 <script>
 (function () {
@@ -1356,6 +1713,8 @@
     if (pathChip) pathChip.textContent = vitals.path;
     var pathLbl = document.getElementById("pathChipLbl");
     if (pathLbl) pathLbl.textContent = pathNameInput.value.trim() || "Clan Path";
+    // The glossary lights up the dots you own, so keep it current while it's on screen.
+    if (glossaryPage && !glossaryPage.hidden) renderGlossary();
   }
   updateRail();
 
@@ -1513,6 +1872,91 @@
     return out;
   }
   renderHealth();
+
+  // ---- Glossary: every power of the 8 disciplines, lit up for the dots this character owns ----
+  var glossaryPage = document.getElementById("glossaryPage");
+  var glTiles = document.getElementById("glTiles");
+  var glPage = document.getElementById("glPage");
+  var glSel = null; // discipline currently shown
+
+  // Dots owned = dots bought from the creation pool plus dots bought with XP.
+  function glDots(name) { return (values.disciplines[name] || 0) + ((xpValues.disciplines && xpValues.disciplines[name]) || 0); }
+
+  // Opens on the character's strongest glossary discipline, or the first one if they have none.
+  function glDefault(names) {
+    var best = names[0], bestN = -1;
+    names.forEach(function (n) { var d = glDots(n); if (d > bestN) { bestN = d; best = n; } });
+    return best;
+  }
+
+  // The list writes costs and rolls in shorthand (1R, Pot+Str). Spell them out for reading.
+  function glCost(c) {
+    if (c === "P") return "Passive";
+    if (c === "F") return "Free";
+    return c.replace(/^(\d+(?:–\d+)?)R(\+?)/, function (m, a, plus) { return a + (plus ? "+" : "") + " Rouse"; });
+  }
+  function glRoll(r) {
+    var L = window.GLOSSARY_LEGEND;
+    return r.replace(/[A-Za-z]+/g, function (w) { return L.stats[w] || L.disciplines[w] || w; }).replace(/\s*\+\s*/g, " + ");
+  }
+
+  function glMake(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function renderGlossary() {
+    var G = window.DISCIPLINE_GLOSSARY;
+    glTiles.textContent = ""; glPage.textContent = "";
+    if (!G) { glPage.appendChild(glMake("p", "gl-desc", "The glossary couldn't load. Try refreshing the page.")); return; }
+    var names = Object.keys(G);
+    if (!glSel || !G[glSel]) glSel = glDefault(names);
+
+    names.forEach(function (n) {
+      var own = glDots(n);
+      var b = glMake("button", "gl-tile" + (n === glSel ? " on" : ""));
+      b.type = "button"; b.dataset.name = n; b.setAttribute("aria-pressed", String(n === glSel));
+      b.appendChild(document.createTextNode(n));
+      var pips = glMake("span", "pips", own ? new Array(Math.min(own, 8) + 1).join("●") : "");
+      pips.setAttribute("aria-hidden", "true");
+      b.appendChild(pips);
+      glTiles.appendChild(b);
+    });
+
+    var own2 = glDots(glSel);
+    glPage.appendChild(glMake("h2", "gl-name", glSel));
+    glPage.appendChild(glMake("p", "gl-desc", (DISCIPLINE_DESC[glSel] || "") + (own2 ? " You have " + own2 + (own2 === 1 ? " dot." : " dots.") : "")));
+    G[glSel].levels.forEach(function (lv) {
+      var sec = glMake("div", "gl-sec" + (lv.dot <= own2 ? " own" : ""));
+      var box = glMake("div", "gl-box");
+      box.setAttribute("role", "img"); box.setAttribute("aria-label", "Dot " + lv.dot);
+      var pips = glMake("div", "gl-pips");
+      pips.style.setProperty("--cols", Math.min(lv.dot, 5)); // up to 5 in one centred row; from 6 on, rows of 5
+      for (var k = 0; k < lv.dot; k++) pips.appendChild(glMake("span", "gl-pip"));
+      box.appendChild(pips);
+      var body = glMake("div");
+      lv.powers.forEach(function (p) {
+        var pw = glMake("div", "gl-pw");
+        pw.appendChild(glMake("p", "gl-pn", p.name));
+        pw.appendChild(glMake("p", "gl-pm", glCost(p.cost) + (p.roll ? " · " + glRoll(p.roll) : "")));
+        pw.appendChild(glMake("p", "gl-pt", p.text));
+        body.appendChild(pw);
+      });
+      sec.appendChild(box); sec.appendChild(body);
+      glPage.appendChild(sec);
+    });
+  }
+
+  glTiles.addEventListener("click", function (ev) {
+    var b = ev.target.closest(".gl-tile");
+    if (!b) return;
+    glSel = b.dataset.name;
+    renderGlossary();
+  });
+  // The tab switcher (a separate script) announces which page just opened.
+  window.addEventListener("kindred:view", function (ev) { if (ev.detail === "glossary") renderGlossary(); });
 
   // ---- Descriptions toggle ----
   var DESC_KEY = "kindred-showdesc";
@@ -2214,17 +2658,20 @@
   var pages = {
     sheet: document.getElementById("sheetPage"),
     health: document.getElementById("healthPage"),
-    notes: document.getElementById("notesPage")
+    notes: document.getElementById("notesPage"),
+    glossary: document.getElementById("glossaryPage")
   };
   var tabs = Array.prototype.slice.call(document.querySelectorAll(".topbar .tab"));
-  if (!bar || !pages.sheet || !pages.health || !pages.notes) return;
+  if (!bar || !pages.sheet || !pages.health || !pages.notes || !pages.glossary) return;
 
   function setView(view) {
     if (!pages[view]) view = "sheet";
     Object.keys(pages).forEach(function (name) { pages[name].hidden = name !== view; });
     document.body.classList.toggle("view-notes", view === "notes");
     document.body.classList.toggle("view-health", view === "health");
+    document.body.classList.toggle("view-glossary", view === "glossary");
     tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.view === view)); });
+    window.dispatchEvent(new CustomEvent("kindred:view", { detail: view }));
   }
   function viewFromHash() { return location.hash.slice(1); }
 
