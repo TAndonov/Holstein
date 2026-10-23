@@ -528,12 +528,11 @@
     .hero p.dek { display: none; }
     .sync-note { margin-top: 10px; }
 
-    /* Budget strip: one swipeable row instead of a wall of chips stuck to the top */
-    .rail { top: 0; flex-wrap: nowrap; overflow-x: auto; gap: 2px; margin: 6px 0 18px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .rail::-webkit-scrollbar { display: none; }
-    .rail-chip { flex: 0 0 auto; min-width: 84px; padding: 6px 8px 7px; scroll-snap-align: start; }
-    .rail-chip .lbl { font-size: 0.56rem; letter-spacing: 0.14em; }
-    .rail-chip .num { font-size: 1.15rem; }
+    /* Budget strip: two tidy rows of five, all visible at once */
+    .rail { top: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; margin: 6px 0 18px; padding: 3px; }
+    .rail-chip { min-width: 0; padding: 5px 2px 6px; }
+    .rail-chip .lbl { font-size: 0.5rem; letter-spacing: 0.04em; text-align: center; line-height: 1.2; }
+    .rail-chip .num { font-size: 1.1rem; }
 
     section.card { padding: 18px 14px 22px; margin: 14px 0; scroll-margin-top: 90px; }
     .sec-head h2 { font-size: 1.3rem; }
