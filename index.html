@@ -540,7 +540,8 @@
   .rail-chip.dmg .num { color: var(--blood-strong); }
 
   /* ---------- Glossary page ---------- */
-  .gl-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 28px 0 18px; }
+  .gl-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 28px 0 18px; }
+  body.view-glossary .wrap, body.view-glossary .topbar-in { max-width: 1120px; }
   .gl-tile {
     display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 13px; text-align: left; cursor: pointer;
     font-family: var(--serif); font-size: 1rem; font-weight: 700; color: var(--ink);
@@ -556,7 +557,7 @@
   .gl-desc { font-style: italic; color: var(--ink-muted); margin: 0 0 12px; font-size: 0.96rem; }
   .gl-sec { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-top: 1px solid var(--line-soft); }
   .gl-box {
-    align-self: stretch; display: flex; align-items: center; justify-content: center; padding: 10px 4px;
+    align-self: start; display: flex; align-items: center; justify-content: center; padding: 14px 4px;
     border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface-2);
   }
   .gl-pips { --pip: 14px; --cols: 5; display: grid; grid-template-columns: repeat(var(--cols), var(--pip)); gap: 6px; }
@@ -580,6 +581,8 @@
     .gl-sec { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px 0; }
     .gl-box { justify-self: start; align-self: start; padding: 10px 12px; }
     .gl-pips { --pip: 12px; gap: 5px; }
+    .gl-tiles { gap: 6px; }
+    .gl-tile { padding: 8px 6px; font-size: 0.72rem; overflow-wrap: anywhere; }
   }
 
   /* ---------- Notes page ---------- */
@@ -641,8 +644,8 @@
     <div class="tabs" role="tablist">
       <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true"><span class="tab-long">Character </span>Sheet</button>
       <button class="tab" id="tabHealth" type="button" role="tab" data-view="health" aria-selected="false">Health</button>
-      <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
       <button class="tab" id="tabGlossary" type="button" role="tab" data-view="glossary" aria-selected="false">Glossary</button>
+      <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
     </div>
     <div class="header-tools">
       <button class="theme-toggle" id="descToggle" type="button">Show details</button>
