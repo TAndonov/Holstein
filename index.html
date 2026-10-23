@@ -557,7 +557,7 @@
   .gl-desc { font-style: italic; color: var(--ink-muted); margin: 0 0 12px; font-size: 0.96rem; }
   .gl-sec { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 20px; padding: 18px 0; border-top: 1px solid var(--line-soft); }
   .gl-box {
-    align-self: start; display: flex; align-items: center; justify-content: center; padding: 14px 4px;
+    align-self: center; display: flex; align-items: center; justify-content: center; padding: 14px 4px; min-height: 120px;
     border: 1px solid var(--line-soft); border-radius: 4px; background: var(--surface-2);
   }
   .gl-pips { --pip: 14px; --cols: 5; display: grid; grid-template-columns: repeat(var(--cols), var(--pip)); gap: 6px; }
@@ -579,7 +579,7 @@
   @media (max-width: 560px) { /* phones: the dot box sits above its powers so the text keeps the full width */
     .gl-page { padding: 20px 16px 22px; }
     .gl-sec { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px 0; }
-    .gl-box { justify-self: start; align-self: start; padding: 10px 12px; }
+    .gl-box { justify-self: start; align-self: start; padding: 10px 12px; min-height: 0; }
     .gl-pips { --pip: 12px; gap: 5px; }
     .gl-tiles { gap: 6px; }
     .gl-tile { padding: 8px 6px; font-size: 0.72rem; overflow-wrap: anywhere; }
