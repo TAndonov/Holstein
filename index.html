@@ -488,6 +488,70 @@
     .tab-long { display: none; }
     .tab { padding: 14px 9px 11px; letter-spacing: 0.1em; }
   }
+  .tab-ic { display: none; }
+
+  /* ---------- Phone layout: app-style bottom tab bar, compact header, thumb-sized dots ----------
+     Everything here sits inside the media query, so the desktop layout is untouched. */
+  @media (max-width: 600px) {
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { -webkit-tap-highlight-color: transparent; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+    button, .dot, .rail-chip, select, label { touch-action: manipulation; }
+    input, select, textarea { font-size: 16px; } /* anything smaller makes iOS zoom the page on focus */
+    .wrap { padding: 0 12px 24px; }
+
+    /* Bottom tab bar (thumb reach). The tabs live inside the top bar, so it must not blur its children's fixed box. */
+    .topbar { position: static; backdrop-filter: none; box-shadow: none; }
+    .topbar-in { padding: 6px 12px; justify-content: flex-end; }
+    .header-tools { padding: 0; }
+    .header-tools .theme-toggle { min-height: 36px; }
+    .tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; gap: 0;
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: color-mix(in srgb, var(--surface) 97%, transparent);
+      border-top: 1px solid var(--line); box-shadow: 0 -10px 26px -16px var(--shadow);
+    }
+    .tab {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      min-height: 58px; padding: 8px 2px 7px; font-size: 0.62rem; letter-spacing: 0.1em;
+      border-bottom: 0; border-top: 2px solid transparent;
+    }
+    .tab[aria-selected="true"] { border-top-color: var(--gold-bright); color: var(--blood-strong); }
+    .tab-ic { display: block; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    body.kb-open .tabs { display: none; } /* the on-screen keyboard needs the room */
+    body.kb-open { padding-bottom: 24px; }
+
+    /* Compact title block: less scrolling before the sheet starts */
+    header.hero { padding: 20px 8px 18px; }
+    .eyebrow { font-size: 0.62rem; letter-spacing: 0.24em; margin-bottom: 8px; }
+    h1 { font-size: 2.1rem; }
+    .hero p.dek { display: none; }
+    .sync-note { margin-top: 10px; }
+
+    /* Budget strip: one swipeable row instead of a wall of chips stuck to the top */
+    .rail { top: 0; flex-wrap: nowrap; overflow-x: auto; gap: 2px; margin: 6px 0 18px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .rail::-webkit-scrollbar { display: none; }
+    .rail-chip { flex: 0 0 auto; min-width: 84px; padding: 6px 8px 7px; scroll-snap-align: start; }
+    .rail-chip .lbl { font-size: 0.56rem; letter-spacing: 0.14em; }
+    .rail-chip .num { font-size: 1.15rem; }
+
+    section.card { padding: 18px 14px 22px; margin: 14px 0; scroll-margin-top: 90px; }
+    .sec-head h2 { font-size: 1.3rem; }
+    .stat { gap: 10px; padding: 9px 0; }
+    body:not(.show-desc) .stat { padding: 8px 0; }
+
+    /* Thumb-sized dots (10-dot tracks stay a touch smaller so they fit one row) */
+    .dots { gap: 8px; }
+    .dot { width: 27px; height: 27px; }
+    .dot:hover { transform: none; }
+    #wpDots .dot, #hungerDots .dot, #humanityDots .dot, #pathDots .dot { width: 22px; height: 22px; }
+    #wpDots, #hungerDots, #humanityDots, #pathDots { gap: 6px; }
+    .stat .disc-info { width: 30px; height: 30px; font-size: 0.95rem; margin-left: 6px; }
+
+    .dice-fab { right: 14px; bottom: calc(72px + env(safe-area-inset-bottom)); }
+    body.kb-open .dice-fab { display: none; }
+    .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  }
 
   /* ---------- Health page: the pin doll ---------- */
   .health-card { margin-top: 28px; }
@@ -676,10 +740,10 @@
 <nav class="topbar" id="topbar" aria-label="Pages">
   <div class="topbar-in">
     <div class="tabs" role="tablist">
-      <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true"><span class="tab-long">Character </span>Sheet</button>
-      <button class="tab" id="tabHealth" type="button" role="tab" data-view="health" aria-selected="false">Health</button>
-      <button class="tab" id="tabGlossary" type="button" role="tab" data-view="glossary" aria-selected="false">Glossary</button>
-      <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false">Notes</button>
+      <button class="tab" id="tabSheet" type="button" role="tab" data-view="sheet" aria-selected="true"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/></svg><span><span class="tab-long">Character </span>Sheet</span></button>
+      <button class="tab" id="tabHealth" type="button" role="tab" data-view="health" aria-selected="false"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.600-7 10-7 10z"/></svg><span>Health</span></button>
+      <button class="tab" id="tabGlossary" type="button" role="tab" data-view="glossary" aria-selected="false"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10M9 8h5"/></svg><span>Glossary</span></button>
+      <button class="tab" id="tabNotes" type="button" role="tab" data-view="notes" aria-selected="false"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 7l3 3"/></svg><span>Notes</span></button>
     </div>
     <div class="header-tools">
       <button class="theme-toggle" id="descToggle" type="button">Show details</button>
@@ -3637,6 +3701,15 @@
   });
   window.addEventListener("hashchange", function () { setView(viewFromHash()); });
   setView(viewFromHash());
+
+  // On phones the tab bar is pinned to the bottom; hide it while a field is being typed in so the keyboard keeps the room.
+  function isField(el) {
+    return !!el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|file)$/.test(el.type)));
+  }
+  document.addEventListener("focusin", function (ev) { if (isField(ev.target)) document.body.classList.add("kb-open"); });
+  document.addEventListener("focusout", function () {
+    setTimeout(function () { if (!isField(document.activeElement)) document.body.classList.remove("kb-open"); }, 60);
+  });
 
   // The budget rail sticks just under the menu, so it needs to know the menu's height.
   function syncHeight() { document.documentElement.style.setProperty("--topbar-h", bar.offsetHeight + "px"); }
