@@ -2875,11 +2875,16 @@
   }
 
   function positionDiscPop() {
-    var r = discBtn.getBoundingClientRect(), w = discPop.offsetWidth, h = discPop.offsetHeight;
+    var r = discBtn.getBoundingClientRect(), w = discPop.offsetWidth;
     var vw = document.documentElement.clientWidth, vh = window.innerHeight;
     var left = Math.max(12, Math.min(r.left, vw - w - 12));
-    var top = r.bottom + 8;
-    if (top + h > vh - 8 && r.top - h - 8 > 8) top = r.top - h - 8; // flip above when there is no room below
+    // Fit the popover into whichever side of the button has more room; it scrolls inside if the text is longer.
+    discPop.style.maxHeight = "";
+    var h = Math.min(discPop.scrollHeight + 2, 520);
+    var below = vh - r.bottom - 20, above = r.top - 20;
+    var top;
+    if (h <= below || below >= above) { top = r.bottom + 8; discPop.style.maxHeight = Math.max(140, Math.min(520, below)) + "px"; }
+    else { var mh = Math.max(140, Math.min(520, above)); discPop.style.maxHeight = mh + "px"; top = r.top - 8 - Math.min(h, mh); }
     discPop.style.left = (left + window.pageXOffset) + "px";
     discPop.style.top = (top + window.pageYOffset) + "px";
   }
