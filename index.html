@@ -1881,6 +1881,7 @@
   var glTiles = document.getElementById("glTiles");
   var glPage = document.getElementById("glPage");
   var glSel = null; // discipline currently shown
+  var glPicked = false; // true once the reader clicks a discipline
 
   // Dots owned = dots bought from the creation pool plus dots bought with XP.
   function glDots(name) { return (values.disciplines[name] || 0) + ((xpValues.disciplines && xpValues.disciplines[name]) || 0); }
@@ -1915,7 +1916,8 @@
     glTiles.textContent = ""; glPage.textContent = "";
     if (!G) { glPage.appendChild(glMake("p", "gl-desc", "The glossary couldn't load. Try refreshing the page.")); return; }
     var names = Object.keys(G);
-    if (!glSel || !G[glSel]) glSel = glDefault(names);
+    // Until the reader picks one, follow the sheet (it may still be loading when the page first opens).
+    if (!glPicked || !G[glSel]) glSel = glDefault(names);
 
     names.forEach(function (n) {
       var own = glDots(n);
@@ -1955,7 +1957,7 @@
   glTiles.addEventListener("click", function (ev) {
     var b = ev.target.closest(".gl-tile");
     if (!b) return;
-    glSel = b.dataset.name;
+    glSel = b.dataset.name; glPicked = true;
     renderGlossary();
   });
   // The tab switcher (a separate script) announces which page just opened.
