@@ -639,6 +639,17 @@
   .gl-pt { font-size: 0.98rem; line-height: 1.7; margin: 0 0 8px; color: var(--ink-muted); }
   .gl-pw > :last-child { margin-bottom: 0; }
   .gl-note { font-size: 0.92rem; line-height: 1.6; margin: 0 0 12px; padding: 10px 14px; color: var(--ink-muted); background: var(--surface-2); border-left: 3px solid var(--line); border-radius: 0 4px 4px 0; }
+  .gl-core { margin: 0 0 14px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
+  .gl-core > summary { cursor: pointer; padding: 12px 16px; font-family: var(--ui); font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--ink); list-style: none; }
+  .gl-core > summary::-webkit-details-marker { display: none; }
+  .gl-core > summary::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--blood-strong); transition: transform 0.12s; }
+  .gl-core[open] > summary::before { transform: rotate(90deg); }
+  .gl-core > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .gl-core-body { padding: 2px 16px 14px; color: var(--ink); }
+  .gl-core-body .gl-pt, .gl-core-body .gl-pl, .gl-core-body .gl-table { color: var(--ink); }
+  .gl-h { font-family: var(--serif); font-size: 1.02rem; font-weight: 700; margin: 14px 0 6px; color: var(--ink); }
+  .gl-lt { font-family: var(--ui); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; margin: 0 0 10px; color: var(--ink-muted); }
+  .gl-sec.own .gl-lt { color: var(--blood-strong); }
   .gl-pl { margin: 0 0 8px; padding-left: 22px; font-size: 0.98rem; line-height: 1.7; color: var(--ink-muted); }
   .gl-tw { margin: 2px 0 10px; overflow-x: auto; }
   .gl-table { border-collapse: collapse; font-size: 0.9rem; line-height: 1.45; color: var(--ink-muted); }
@@ -1036,15 +1047,15 @@
     "Potence": { abbr: "Pot", levels: [
       dotLevel(1, [
         pw(1, "Strengthened Blood Surge", "1R", "Normal Str roll", "+2 dice to Strength Blood Surge."),
-        pw(2, "Intercepting Hand", "1R", "Pot+Str", "Catch, stop, or redirect one incoming physical impact; successes counter force.")
+        pw(2, "Intercepting Hand", "1R", "Pot+Str", "Intercept, stop, catch, or redirect one incoming physical impact; successes determine the force overcome.")
       ]),
       dotLevel(2, [
-        pw(3, "Deliberate Hardening", "1R", "Pot+Str", "Reactive; reduce incoming damage by 1 per success. Must anticipate attack; no repeated defense before next opportunity."),
-        pw(4, "Penetrating Shockwave", "1R", "Pot+Ath", "Strike through target; allocate successes to displacement (1m each) or secondary impact (1 each).")
+        pw(3, "Bonebreaker", "1R", "Pot+Str", "On a grapple/hold or a connecting strike: extra damage and debilitating effects (injured limbs, damaged joints, impaired movement). Armor or natural damage reduction blocks the extra damage unless you hit an unprotected area. Exact numbers not yet defined."),
+        pw(4, "Penetrating Shockwave", "1R", "Pot+Ath", "Transmit an impact through the original target; allocate successes to displacement (1m each) or transmitted impact (1 each).")
       ]),
       dotLevel(3, [
-        pw(5, "Impossible Implements", "1R", "Pot+Str", "On Strength Blood Surge, wield oversized or awkward objects; successes govern mass and handling."),
-        pw(6, "Crushing Entrapment", "1R", "Pot+Ath", "Break objects embedded in your flesh; suffer +1 Health for +2 dice, repeatable.")
+        pw(5, "Impossible Implements", "1R", "Pot+Str", "During a Strength Blood Surge, wield oversized or awkward objects as weapons or implements; successes govern size and handling."),
+        pw(6, "Deliberate Hardening", "1R", "Pot+Str", "Harden your body before an anticipated impact; reduce incoming damage by 1 per success. Needs a chance to react; not repeatable until the opportunity returns.")
       ]),
       dotLevel(4, [
         pw(7, "Shape the Unyielding", "1R", "Pot+Crf", "Permanently reshape hard material by hand; successes determine mass and hardness."),
@@ -1133,31 +1144,36 @@
 
     "Dominate": { abbr: "Dom", levels: [
       dotLevel(1, [
-        pw(1, "Commanding Word", "1R", "Dom+Cnv", "Spoken immediate command through eye contact; obeyed next opportunity.")
+        pw(1, "Dominate", "1R", "Dom+Int", "Eye contact and speech impose influence on a conscious mind; then apply the faculties you own. One activation, one roll; extra costs add on."),
+        pw(2, "Command", "P", null, "One simple, immediately executable command; obeyed on their next opportunity. Victim can recognize it as supernatural.")
       ]),
       dotLevel(2, [
-        pw(2, "Stolen Memory", "1R", "Dom+Int", "Alter/remove/fabricate memories; roughly one coherent detail or segment/success.")
+        pw(3, "Establish Authority", "P", null, "Subject believes you hold legitimate authority and accepts ordinary instructions consistent with it, even if resentful."),
+        pw(4, "The Stolen Memory", "P", null, "Suppress, fabricate, replace, or rearrange memories; successes set amount and complexity. Using both dot-2 faculties on one target: +1R.")
       ]),
       dotLevel(3, [
-        pw(3, "Sleeping Command", "1R", "Dom+Gui", "Triggered order; 1 month/success dormant; extra successes allow conditions/exceptions."),
-        pw(4, "Piercing Gaze", "P", null, "+2 dice to Dominate against strongly distracted victim while maintaining eye contact.")
+        pw(5, "Complex Commands", "P", null, "Extended, multi-step assignment; the victim improvises and overcomes obstacles in its service, values unchanged."),
+        pw(6, "Sleeping Command", "P", null, "Attach a trigger to a command; dormant 1 month/success unless triggered or removed."),
+        pw(7, "Piercing Gaze", "P", null, "+2 dice to Dominate against a strongly distracted subject while holding eye contact.")
       ]),
       dotLevel(4, [
-        pw(5, "Borrowed Body", "2R", "Dom+Cnv", "Possess creature; mortal: 1 scene/success; resisting supernatural vessel: 1 scene; original body vulnerable."),
-        pw(6, "Crimson Mandate", "1R+", "Relevant Dom roll", "Touch to Dominate immortals; +1 die per extra R, up to Dom bonus dice; vampires +2 defense dice against lasting commands/memory changes.")
+        pw(8, "Overpower Instincts", "P", null, "Commands may override self-preservation; victim stays afraid and can struggle, with renewed resistance on deep conflict."),
+        pw(9, "Possession", "+1R", "Dom+Cnv (replaces Dom+Int)", "Occupy another creature's body; mortal: 1 scene/success; resisting supernatural vessel: 1 scene; your body is vulnerable."),
+        pw(10, "Crimson Mandate", "1R+", "Relevant Dom roll", "Touch and vitae let Dominate affect vampires and immortals; +1 die per extra R (max Dom rating); vampires +2 defense vs lasting conditioning or memory change.")
       ]),
       dotLevel(5, [
-        pw(7, "Chain of Command", "2R", "Dom+Cnv", "Command hierarchy, 1 level or branch/success; 1 month/success.")
+        pw(11, "Mass Domination", "+2R", "One Dom roll", "One activation on multiple subjects (number by successes); all get the same command."),
+        pw(12, "Distant Domination", "P", null, "Reach any previously influenced creature in the same realm; sleepers are reached through dreams (+2 dice).")
       ]),
       dotLevel(6, [
-        pw(8, "Binding Word", "2R", "Dom+Cnv", "Oaths/contracts enforce continued obedience; 1 year/success.")
+        pw(13, "Chain of Command", "+2R per subject", "One Dom activation", "Grant a dominated subject limited authority to enforce your defined instructions on others.")
       ]),
       dotLevel(7, [
-        pw(9, "Invading Sovereign", "3R", "Dom+Wil", "Remote mental entry, command or possession via established bond; same realm."),
-        pw(10, "Forbidden Choice", "3R", "Dom+Wil", "Remove voluntary capacity for specified class of decisions; 1 month/success.")
+        pw(14, "Institutional Domination", "+4R", "Dom+Int", "Use an institution, office, or title as the channel; successes set depth, breadth, and durability.")
       ]),
       dotLevel(8, [
-        pw(11, "Eternal Throne", "3R", "Dom+Cnv", "Bind command to an institution/office, inheritable by successors; renew for 3R yearly.")
+        pw(15, "Reconstruction of Personality", null, "Dom+Cnv", "Rearrange parts of a subject's personality (separate roll per part); may copy and store the structure."),
+        pw(16, "Imposition of Personality", null, "Dom+Cnv", "Implant a stored personality; spend 1 Will or +2 Hunger to reduce the victim's Willpower by 1, repeatable.")
       ])
     ] },
 
@@ -1235,24 +1251,23 @@
         pw(4, "Untraced", "1R", "Obf+Sth", "Conceal tracks, scent, spilled blood, etc. created this scene; traces physically remain.")
       ]),
       dotLevel(3, [
-        pw(5, "Mask of a Thousand Faces", "1R", "Obf+Exp", "Change perceived appearance, not physical body; one scene."),
-        pw(6, "Shroud", "1R + full reaction", "Obf+Wit", "Vanish when threatened; moving maintains concealment, other actions break it; incoming attacks still hit; one scene maximum.")
+        pw(5, "Unseen Path", "1R", "Obf+Sth", "Declare an objective and stay imperceptible while pursuing it; successes set its scope (1 = one narrow task, 4 = find an object in a castle, 5+ = extensive). Ends on contact with a conscious being, off-objective activity, or completion.")
       ]),
       dotLevel(4, [
-        pw(7, "Forsaken", "2R", "Obf+Sed", "Others disregard one target and events involving them; 1 minute/success; disruptive actions may break effect."),
-        pw(8, "Grey Feast", "1R", "Obf+Gui", "Allocate successes to 5m radius or −1 die to investigation/detection; one scene.")
+        pw(6, "Forsaken", "2R", "Obf+Sed", "Others disregard one target and events involving them; 1 minute/success; disruptive actions may break effect."),
+        pw(7, "Grey Feast", "1R", "Obf+Gui", "Allocate successes to 5m radius or −1 die to investigation/detection; one scene.")
       ]),
       dotLevel(5, [
-        pw(9, "Gift of Absence", "1R per dosage/recipient", null, "Share blood to grant Obfuscate 1–3 sequentially; one scene; recipient pays normal activation costs and uses donor's Obf rating.")
+        pw(8, "Gift of Absence", "1R per dosage/recipient", null, "Share blood to grant Obfuscate 1–3 sequentially; one scene; recipient pays normal activation costs and uses donor's Obf rating.")
       ]),
       dotLevel(6, [
-        pw(10, "Unreadable Self", "P", "Obf+Gui when contested", "False supernatural identity, concealed diablerie and blocked mind-reading; stronger Auspex may pierce.")
+        pw(9, "Unreadable Self", "P", "Obf+Gui when contested", "False supernatural identity, concealed diablerie and blocked mind-reading; stronger Auspex may pierce.")
       ]),
       dotLevel(7, [
-        pw(11, "Missing Yesterday", "3R", "Obf+Int", "Suppress specific memories/knowledge among witnesses within close range; persists until overcome.")
+        pw(10, "Missing Yesterday", "3R", "Obf+Int", "Suppress specific memories/knowledge among witnesses within close range; persists until overcome.")
       ]),
       dotLevel(8, [
-        pw(12, "Unwritten Tale", "4R", "Obf+Int", "Suppress an entire concept and desire to understand it across up to city scale; 1 year/success; may wound Dreaming.")
+        pw(11, "Unwritten Tale", "4R", "Obf+Int", "Suppress an entire concept and desire to understand it across up to city scale; 1 year/success; may wound Dreaming.")
       ])
     ] },
 
@@ -1300,12 +1315,15 @@
 // The sheet's "i" popovers use the short list in DISCIPLINE_GLOSSARY above; the Glossary tab reads this one.
 (function () {
   // Shape:  DISCIPLINE_LONG[discipline] = { desc, notes: [text], levels: [ { dot, powers: [ power ] } ] }
+  //   optional on a discipline: core = { title, blocks } (rules that apply to the whole Discipline)
+  //   optional on a level: title (e.g. "The Command") and intro (blocks shown above its powers)
   //   power = { n, name, meta, blocks }
   //     n:      running number within the discipline, continuing across dots
   //     meta:   the "Cost: ... · Roll: ..." line as written
-  //     blocks: paragraphs (strings), { list: [items] } or { table: { head: [..], rows: [[..]] } }, in reading order
+  //     blocks: paragraphs (strings), { list: [items] }, { table: { head: [..], rows: [[..]] } },
+  //             { h: "sub-heading" } or { m: "cost/roll line" }, in reading order
   function W(n, name, meta, blocks) { return { n: n, name: name, meta: meta, blocks: blocks }; }
-  function L(dot, powers) { return { dot: dot, powers: powers }; }
+  function L(dot, powers, extra) { return { dot: dot, powers: powers, title: extra && extra.title, intro: (extra && extra.intro) || [] }; }
   function T(head, rows) { return { table: { head: head, rows: rows } }; }
   function U(items) { return { list: items }; }
 
@@ -1317,31 +1335,33 @@
       levels: [
         L(1, [
           W(1, "Strengthened Blood Surge", "Cost: 1 Rouse Check · Roll: Normal Strength-related action", [
-            "When invoking a Strength-related Blood Surge, add +2 additional dice to the action. This is added to the normal Blood Surge benefit."
+            "Gain +2 dice to Strength-based Blood Surge."
           ]),
           W(2, "The Intercepting Hand", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
-            "Actively catch, stop, strike aside, or overpower an incoming physical attack or moving object. Successes determine how much opposing physical force is negated or redirected. Against an active attacker, resolve the attempt as an opposed contest.",
-            "One activation addresses one incoming physical event, not an entire sequence of attacks."
+            "Actively intercept, stop, catch, or redirect one incoming physical impact. Successes determine the force overcome."
           ])
         ]),
         L(2, [
-          W(3, "Deliberate Hardening", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
-            "Immediately before a known incoming impact, deliberately harden muscles and bodily structures. After the attack connects, reduce its damage by 1 point per success.",
-            "The vampire must have an opportunity to react. They cannot repeatedly harden against additional attacks before regaining that opportunity. Ambushes and attacks too fast to anticipate may bypass the defense."
+          W(3, "Bonebreaker", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
+            "Activate during a grapple or hold, or when a physical strike successfully connects.",
+            "Roll Potence + Strength to inflict additional damage and debilitating physical effects, such as injured limbs, damaged joints, or impaired movement.",
+            U([
+              "The underlying strike or grapple must connect before Bonebreaker is activated.",
+              "The target's armor, natural scales, or other forms of physical damage reduction completely prevent Bonebreaker's additional damage unless the vampire deliberately attacks an unprotected area.",
+              "Bonebreaker's effects are separate from the underlying attack's normal damage.",
+              "The exact additional damage and severity of debilitating effects remain to be defined."
+            ])
           ]),
           W(4, "Penetrating Shockwave", "Cost: 1 Rouse Check · Roll: Potence + Athletics", [
-            "Transmit the force of a physical blow through its initial target into creatures or objects behind it.",
-            "Each success may provide 1 meter of displacement or 1 point of transmitted impact against a secondary target. Allocate successes when activating. Additional obstacles can reduce the remaining force according to their resistance."
+            "Transmit an impact through the original target. Allocate successes between displacement (1 meter per success) and additional transmitted impact (1 point per success)."
           ])
         ]),
         L(3, [
-          W(5, "Impossible Implements", "Cost: 1 Rouse Check during a Strength Blood Surge · Roll: Potence + Strength", [
-            "Instantly master the balance, leverage, and handling of an unusually heavy or awkward object. The roll determines the object's weight and awkwardness that can be overcome.",
-            "Within the achieved magnitude, ignore the normal difficulties of the object's balance and shape for that action. Its physical mass remains unchanged."
+          W(5, "Impossible Implements", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
+            "During a Strength Blood Surge, manipulate oversized or awkward objects as weapons or implements. Successes govern the size and difficulty of handling."
           ]),
-          W(6, "Crushing Entrapment", "Cost: 1 Rouse Check · Roll: Potence + Athletics", [
-            "When pierced by an object, contract your tissues and muscles around it to seize, deform, or break it. The original injury still occurs.",
-            "You may voluntarily suffer additional Health damage for +2 dice per Health point suffered. Successes determine how severely the embedded object is damaged, opposed by its structural resistance when applicable."
+          W(6, "Deliberate Hardening", "Cost: 1 Rouse Check · Roll: Potence + Strength", [
+            "Actively harden your body before an anticipated impact. Reduce incoming damage by 1 per success. Requires an opportunity to react and cannot be repeatedly applied without regaining that opportunity."
           ])
         ]),
         L(4, [
@@ -1579,86 +1599,156 @@
     "Dominate": {
       desc: "The imposition of will through commands, memories, possession, supernatural obligations, and enduring authority.",
       notes: [],
+      core: {
+        title: "Core rules",
+        blocks: [
+          { m: "Cost: 1 Rouse Check · Roll: Dominate + Intelligence" },
+          "Establish eye contact and speak to a conscious subject to impose supernatural influence upon their mind.",
+          "A successful activation places the subject under your influence and allows you to apply the faculties unlocked by your Dominate rating.",
+          U([
+            "One activation, one roll. Passive faculties do not require separate rolls or Rouse Checks.",
+            "A faculty with an additional cost adds that cost to the activation.",
+            "A faculty specifying a different roll uses that roll instead of Dominate + Intelligence, not in addition to it.",
+            "A victim may oppose domination through the appropriate mental resistance roll.",
+            "Greater complexity, duration, and demands contrary to the subject's convictions require more successes.",
+            "Successfully imposed orders remain recognizable as alien compulsions. The victim need not agree with them and may seek ways to resist, circumvent, or ultimately break the influence."
+          ]),
+          { h: "Resistance to objectionable commands" },
+          "The vampire's successes must overcome both the target's resistance and the difficulty created by the command's nature.",
+          T(["Command", "Suggested resistance"], [
+            ["Ordinary instruction consistent with the subject's interests", "Normal resistance"],
+            ["Inconvenient or personally objectionable instruction", "Increased difficulty"],
+            ["Betrayal of important loyalties, beliefs, or obligations", "Significantly increased difficulty"],
+            ["Profound moral violation or direct threat to survival", "Requires the appropriate higher-dot faculty and strong success"]
+          ]),
+          "Once an order is established, the subject can experience continuing internal conflict. Where circumstances fundamentally challenge their convictions, the Storyteller may permit renewed resistance.",
+          "Successful resistance can interrupt or break a command; it does not necessarily end every other influence the vampire has established."
+        ]
+      },
       levels: [
         L(1, [
-          W(1, "The Commanding Word", "Cost: 1 Rouse Check · Roll: Dominate + Conviction", [
-            "Establish eye contact and issue a spoken command requiring an immediate action or decision.",
-            "A successfully dominated subject begins complying on their next available opportunity. The command lasts until its immediate objective is completed, interrupted, or made impossible.",
-            "Successes determine the strength of the imposed command. This power does not establish lasting servitude."
+          W(1, "Dominate", "Cost: 1 Rouse Check · Roll: Dominate + Intelligence", [
+            "The active power and delivery mechanism for the entire Discipline.",
+            "On success, the target becomes influenced by you, establishing a supernatural connection that higher-dot faculties can exploit.",
+            "The activation itself does not specify what the subject must do. Its immediate consequences come from the faculties applied to it."
+          ]),
+          W(2, "Command", "Type: Passive", [
+            "A successful Dominate activation may impose a simple command requiring one immediately executable action.",
+            "The subject must attempt to obey on their next opportunity, provided the command is within the limitations of your current Dominate rating.",
+            "The victim can recognize the impulse as supernatural and remain deeply opposed to it."
           ])
-        ]),
+        ], { title: "The Command" }),
         L(2, [
-          W(2, "The Stolen Memory", "Cost: 1 Rouse Check · Roll: Dominate + Intelligence", [
-            "Suppress, replace, fabricate, or modify memories.",
-            "Each success permits alteration of a coherent detail or short segment of recollection. Major autobiographical changes require exceptional success.",
-            "Changes persist until exposed or overturned through appropriate means. Strong contradictory evidence may alert a subject that their recollection is unreliable.",
-            "Vampires are particularly resistant to long-term memory alteration and ordinarily recognize that an alien will invaded their mind."
+          W(3, "Establish Authority", "Type: Passive faculty", [
+            "Cause the subject to believe you possess legitimate authority over them.",
+            "They regard ordinary instructions consistent with that authority as valid, even if they dislike or resent you.",
+            "This does not automatically create affection, trust, loyalty, or unquestioning obedience. A subject may recognize your authority while resisting an instruction that violates their convictions.",
+            "The effect provides a foundation for continued influence and the later administration of complex orders."
+          ]),
+          W(4, "The Stolen Memory", "Type: Passive faculty", [
+            "Instead of only commanding behavior, alter the subject's recollections.",
+            "Suppress, fabricate, replace, or rearrange memories. Successes determine the amount and complexity of recollection affected.",
+            "The subject may experience inconsistencies, confusion, or distress when the altered memories contradict other evidence.",
+            "Changes to memory do not automatically change the victim's underlying emotions or convictions."
           ])
-        ]),
+        ], { title: "Authority and Memory", intro: [
+          "A successful Dominate activation can apply one of the following modifications without additional cost.",
+          "Applying both to the same target during one activation requires +1R."
+        ] }),
         L(3, [
-          W(3, "The Sleeping Command", "Cost: 1 Rouse Check · Roll: Dominate + Guile", [
-            "Implant a command that activates when a defined condition occurs.",
-            "A successful activation provides one trigger and one associated command. Each additional success beyond the first may add a meaningful condition or exception.",
-            "The command remains dormant for one month per success, unless triggered or removed earlier."
+          W(5, "Complex Commands", "Type: Passive", [
+            "Dominate can now impose an extended assignment rather than a single immediate action.",
+            "The subject may undertake multiple steps, make practical decisions, improvise, and overcome ordinary obstacles while pursuing the commanded objective.",
+            "The victim's intelligence serves the command, but their values do not automatically change.",
+            "They may experience resentment, horror, hesitation, or internal resistance as the assignment develops. Commands requiring profound personal betrayal remain difficult to impose and maintain."
           ]),
-          W(4, "The Piercing Gaze", "Type: Passive", [
-            "While maintaining concentrated eye contact with a creature experiencing a powerful distraction, gain +2 dice on Dominate attempts against it.",
-            "The distraction must meaningfully compromise concentration or resistance. Routine conversation is insufficient.",
-            "This enhancement can combine with the fourth-dot Crimson Mandate."
+          W(6, "Sleeping Command", "Type: Passive", [
+            "Attach a clearly defined trigger to a Dominate command.",
+            "The command remains dormant until the condition occurs, at which point the victim experiences the compulsion to act.",
+            "A dormant command lasts one month per success, unless triggered or removed earlier."
+          ]),
+          W(7, "Piercing Gaze", "Type: Passive", [
+            "Gain +2 dice on Dominate attempts against a subject undergoing a powerful distraction while maintaining eye contact.",
+            "Routine conversation or minor distractions do not qualify."
           ])
-        ]),
+        ], { title: "Complex and Conditional Commands" }),
         L(4, [
-          W(5, "The Borrowed Body", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
-            "Temporarily possess another creature, directing its physical actions with your own consciousness.",
+          W(8, "Overpower Instincts", "Type: Passive", [
+            "Dominate may now impose commands that override the subject's instinct for self-preservation.",
+            "The vampire can compel a victim to undertake actions involving grave personal danger, even when the victim understands the consequences.",
+            "This does not suppress fear, erase moral objections, or make the victim willing. The victim can be terrified, struggle against the compulsion, and attempt to regain control even while obeying.",
+            "A sufficiently profound conflict may permit renewed resistance."
+          ]),
+          W(9, "Possession", "Type: Enhanced activation · Cost: +1 Rouse Check · Roll: Dominate + Conviction (replaces Dominate + Intelligence)", [
+            "Instead of imposing a behavioral command, occupy another creature's consciousness and directly control its body.",
+            "Your original body becomes vulnerable. Possession does not grant extra actions.",
             "Against an unresisting mortal, duration is one scene per success. Against a resisting supernatural vessel, successful possession lasts one scene.",
-            "Severe injury to the vessel or powerful opposing mental influence can provoke another contest for control.",
-            "Your original body remains vulnerable. Possession transfers agency into the vessel and does not create extra actions."
+            "Severe injury, powerful outside interference, or exceptional mental resistance may provoke a new contest for control.",
+            "The victim's consciousness is not necessarily destroyed or convinced. It remains a possible source of resistance."
           ]),
-          W(6, "The Crimson Mandate", "Cost: At least 1 Rouse Check · Roll: The applicable Dominate power, opposed by the immortal's supernatural resistance", [
-            "Physical contact and vitae expenditure allow Dominate to affect vampires and other appropriate immortal beings.",
-            "Each additional Rouse Check grants +1 bonus die, up to a maximum of additional dice equal to your Dominate rating.",
-            "Against vampires, lasting conditioning or substantial memory alteration grants the victim +2 defense dice. Immediate commands do not incur this additional resistance.",
-            "Vampiric victims ordinarily identify who invaded their consciousness. When a command succeeds, they must obey despite knowing they have been dominated."
+          W(10, "Crimson Mandate", "Type: Enhanced delivery · Cost: Minimum 1 Rouse Check invested · Roll: The relevant Dominate roll", [
+            "Physical touch and an investment of vitae permit Dominate to affect vampires and other appropriate immortal creatures.",
+            "Each additional Rouse Check invested grants +1 die, up to a maximum of additional dice equal to Dominate rating.",
+            "Vampires gain +2 defense dice against enduring conditioning or substantial memory alteration.",
+            "Vampiric victims ordinarily recognize the identity of the supernatural intruder.",
+            "Crimson Mandate expands who can be targeted; it does not automatically override supernatural resistance."
           ])
-        ]),
+        ], { title: "Overpowering the Self" }),
         L(5, [
-          W(7, "The Chain of Command", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
-            "Establish a supernatural hierarchy through which designated subordinates communicate and enforce your commands.",
-            "Each success permits one additional command level or one additional directly controlled branch.",
-            "The hierarchy persists for one month per success, unless disrupted or dismantled.",
-            "Intermediaries can transmit the master's authority but do not personally acquire Dominate powers."
-          ])
-        ]),
-        L(6, [
-          W(8, "The Binding Word", "Cost: 2 Rouse Checks · Roll: Dominate + Conviction", [
-            "Bind an enduring supernatural obligation into an oath, written decree, contract, or formal undertaking.",
-            "The subject must acknowledge the oath or be compelled into it through successful prior domination.",
-            "The obligation lasts one year per success. A subject attempting to violate it must first overcome its remaining supernatural authority through an appropriate contest.",
-            "Unlike Quietus's blood laws, this power directly constrains voluntary decisions rather than automatically inflicting physical punishment."
-          ])
-        ]),
-        L(7, [
-          W(9, "The Invading Sovereign", "Cost: 3 Rouse Checks · Roll: Dominate + Will", [
-            "Project your consciousness into another mind without ordinary eye contact.",
-            "A previously bound creature can be reached anywhere within the same supernatural realm while the connection persists. The elder may communicate, command, or attempt possession through the connection.",
-            "An unwilling, unbound immortal requires an existing Crimson Mandate connection or another established psychic avenue before intrusion can be attempted.",
-            "The target may resist. During direct possession, the vampire's original body remains vulnerable."
+          W(11, "Mass Domination", "Type: Enhanced activation · Cost: +2 Rouse Checks · Roll: One Dominate roll", [
+            "Apply one Dominate activation to multiple subjects simultaneously.",
+            "The number of subjects affected is determined by successes, with each subject retaining appropriate supernatural resistance.",
+            "All affected subjects receive the same central command or modification. The vampire does not acquire separate independent actions against each target.",
+            "Compatible lower-dot faculties may modify the shared command."
           ]),
-          W(10, "The Forbidden Choice", "Cost: 3 Rouse Checks · Roll: Dominate + Will", [
-            "Prevent a creature from voluntarily choosing a specified category of actions.",
-            "The prohibition must be defined precisely. Broad or ambiguous categories require substantially greater success and may be challenged by contradictory situations.",
-            "Duration is one month per success. Vampires retain their enhanced resistance against prolonged domination.",
-            "The target may understand the forbidden act but cannot ordinarily decide to perform it."
+          W(12, "Distant Domination", "Type: Passive delivery enhancement", [
+            "Any creature that has previously been successfully influenced by your Dominate may be targeted remotely, regardless of ordinary physical distance, provided it remains within the same supernatural realm.",
+            "The subject hears your voice as though you were speaking directly to them.",
+            "A sleeping subject instead perceives your presence within their dreams. Gain +2 dice when attempting Dominate against a sleeping subject through this connection.",
+            "A successful prior influence establishes the connection even after the original instruction or alteration has expired.",
+            "This power allows a new Dominate activation to reach the subject remotely; it does not make every later instruction automatic."
           ])
-        ]),
+        ], { title: "Dominion Beyond the Individual" }),
+        L(6, [
+          W(13, "Chain of Command", "Type: Enhanced activation · Cost: +2 Rouse Checks per empowered subject · Roll: One Dominate activation", [
+            "Grant a dominated subject limited supernatural authority to command other creatures on your behalf.",
+            "When establishing this authority, define the instructions that the empowered subject is authorized to reinforce.",
+            "The subordinate can impose supernatural obedience only when doing so advances the instructions you established.",
+            "Their authority does not extend to unrelated goals, personal interests, or commands that contradict your mandate.",
+            "This is a genuine delegation of supernatural power, rather than merely transmitting your spoken orders. It does not grant the subordinate unrestricted access to your full Dominate rating.",
+            "The subject's capacity to use the delegated authority ends when the relevant mandate expires or is successfully broken."
+          ])
+        ], { title: "Chain of Command" }),
+        L(7, [
+          W(14, "Institutional Domination", "Type: Enhanced activation · Cost: +4 Rouse Checks · Roll: Dominate + Intelligence", [
+            "Use an institution, office, title, or recognized abstract concept of authority as the channel for Dominate.",
+            "A person becomes vulnerable to your imposed authority through their relationship to that institution or concept, rather than solely through direct eye contact or an established personal bond.",
+            "The institution or authority must possess genuine significance for those affected. Merely inventing an arbitrary title does not provide unlimited access to unrelated minds.",
+            "Successes determine the depth, breadth, and durability of the imposed influence.",
+            "Subjects remain capable of resisting commands that violate deeply held convictions. An institution can confer authority without eliminating the conscience of its members."
+          ])
+        ], { title: "Abstract Sovereignty" }),
         L(8, [
-          W(11, "The Eternal Throne", "Cost: 3 Rouse Checks initially, with renewal of 3 Rouse Checks every year · Roll: Dominate + Conviction", [
-            "Bind a supernatural mandate into an established institution, title, or office with recognized succession rules.",
-            "Legitimate successors inherit the supernatural obligation associated with the office. Successes determine how deeply the mandate extends through the hierarchy and how difficult it is to resist.",
-            "The vampire may use the bound institutional network as a conduit for commands or projected consciousness.",
-            "If the annual renewal is not paid, the mandate becomes dormant until renewed rather than immediately disappearing."
+          W(15, "Reconstruction of Personality", "Type: Advanced Dominate faculty · Roll: Dominate + Conviction", [
+            "Disassemble, rearrange, or reconstruct portions of a dominated subject's personality.",
+            "Each distinct portion requires a separate Dominate + Conviction roll, with its scope and complexity determined in consultation with the Storyteller.",
+            "Possible alterations include habitual responses, values, attachments, convictions, or enduring patterns of behavior.",
+            "The vampire may also copy and supernaturally store the resulting personality structure for later use.",
+            "Copying a personality does not automatically remove the original, and a stored personality is not necessarily a captured soul or independent consciousness."
+          ]),
+          W(16, "Imposition of Personality", "Type: Advanced Dominate faculty · Roll: Dominate + Conviction", [
+            "Implant a previously stored personality into a dominated subject, partially or completely supplanting the subject's original identity.",
+            "Successes determine the extent of replacement and its resistance to the original personality's attempts to reassert itself.",
+            "During the attempt, the vampire may repeatedly choose either:",
+            U([
+              "Spend 1 Willpower to reduce the victim's Willpower by 1.",
+              "Increase their own Hunger directly by 2 to reduce the victim's Willpower by 1."
+            ]),
+            "These expenditures require no Rouse Check and may be repeated as long as the vampire can pay the chosen cost.",
+            "There is no arbitrary expenditure limit based on Dominate rating. The operative constraints are the resources available, the victim's remaining Willpower, and the actual difficulty of reconstructing or replacing the personality.",
+            "The personality's original owner may remain psychologically present and capable of struggling against the imposed identity, particularly when replacement is incomplete."
           ])
-        ])
+        ], { title: "Sovereignty of Identity" })
       ]
     },
 
@@ -1896,28 +1986,37 @@
           ])
         ]),
         L(3, [
-          W(5, "Mask of a Thousand Faces", "Cost: 1 Rouse Check · Roll: Obfuscate + Expression", [
-            "Alter your perceived appearance and identity while remaining visible.",
-            "Successes determine the complexity and credibility of the disguise and its resistance to scrutiny.",
-            "Duration: one scene.",
-            "The actual body remains unchanged. Physical contact may reveal contradictions between real anatomy and the projected appearance."
-          ]),
-          W(6, "Shroud", "Cost: 1 Rouse Check and your full reaction · Roll: Obfuscate + Wits", [
-            "React to danger or another immediate trigger by vanishing from conscious perception and becoming unintelligible to observers.",
-            "You may continue moving without automatically breaking the effect. Taking another action ends the concealment.",
-            "Already initiated attacks can still hit you, and your body remains physically present.",
-            "If no revealing action occurs, the effect lasts until the end of the scene. Successes determine how difficult it is for observers to reacquire awareness of your presence."
+          W(5, "The Unseen Path", "Cost: 1 Rouse Check · Roll: Obfuscate + Stealth", [
+            "The vampire declares an activity or objective and becomes imperceptible to ordinary senses while pursuing it.",
+            "The number of successes determines the scope and complexity of the objective that can be maintained under concealment.",
+            T(["Successes", "Permitted objective"], [
+              ["1", "One narrow, straightforward activity, such as walking down a corridor to reach a particular door."],
+              ["2", "A simple objective requiring several related movements or interactions with the environment."],
+              ["3", "A moderately complex objective involving investigation, searching, or navigating several locations."],
+              ["4", "A broad objective, such as finding a particular object somewhere within an entire castle."],
+              ["5+", "An extensive objective allowing numerous activities and environmental interactions in pursuit of a clearly defined goal."]
+            ]),
+            "Rules:",
+            U([
+              "The vampire can move, investigate, search, open doors, manipulate objects, and otherwise interact with the environment when those actions advance the declared objective.",
+              "The vampire remains imperceptible to ordinary senses while acting within that objective.",
+              "Directly interacting with a conscious being ends the effect.",
+              "Activities outside the declared objective also end the effect.",
+              "Completing or abandoning the objective ends the effect.",
+              "Supernatural perception may contest the concealment normally.",
+              "The power does not erase the physical consequences of the vampire's actions."
+            ])
           ])
         ]),
         L(4, [
-          W(7, "The Forsaken", "Cost: 2 Rouse Checks · Roll: Obfuscate + Seduction", [
+          W(6, "The Forsaken", "Cost: 2 Rouse Checks · Roll: Obfuscate + Seduction", [
             "Cause surrounding creatures to disregard one selected victim and the events involving that victim.",
             "Witnesses may physically perceive the victim but fail to direct normal attention or concern toward their condition.",
             "Successes determine how disruptive an interaction or injury can become before observers receive renewed opportunities to notice.",
             "Duration: one minute per success.",
             "The target is not paralyzed and retains freedom to act."
           ]),
-          W(8, "The Grey Feast", "Cost: 1 Rouse Check · Roll: Obfuscate + Guile", [
+          W(7, "The Grey Feast", "Cost: 1 Rouse Check · Roll: Obfuscate + Guile", [
             "Project an area of diminished attention and curiosity, making detection and investigation more difficult.",
             "Each success can be allocated to either:",
             U(["5 meters of effect radius, or", "1 penalty die on detection and investigation rolls within that area."]),
@@ -1926,7 +2025,7 @@
           ])
         ]),
         L(5, [
-          W(9, "The Gift of Absence", "Cost: 1 Rouse Check per dosage per recipient · Roll: None", [
+          W(8, "The Gift of Absence", "Cost: 1 Rouse Check per dosage per recipient · Roll: None", [
             "Grant another creature temporary access to Obfuscate powers through your vitae.",
             "Each dosage grants one sequential Discipline dot, up to Obfuscate 3, without exceeding the donor's own rating.",
             "Duration: one scene.",
@@ -1934,7 +2033,7 @@
           ])
         ]),
         L(6, [
-          W(10, "The Unreadable Self", "Type: Passive, always active · Roll when opposed: Obfuscate + Guile", [
+          W(9, "The Unreadable Self", "Type: Passive, always active · Roll when opposed: Obfuscate + Guile", [
             "Project a false supernatural impression of your identity and make your consciousness difficult to investigate.",
             "Auspex and comparable abilities may encounter a fabricated psychic identity, including concealed signs of diablerie. Direct mind-reading encounters an inaccessible or blank mental surface.",
             "Supernatural investigators oppose Obfuscate + Guile.",
@@ -1943,7 +2042,7 @@
           ])
         ]),
         L(7, [
-          W(11, "The Missing Yesterday", "Cost: 3 Rouse Checks · Roll: Obfuscate + Intelligence", [
+          W(10, "The Missing Yesterday", "Cost: 3 Rouse Checks · Roll: Obfuscate + Intelligence", [
             "Suppress one coherent subject of knowledge or memory in the minds of witnesses within close range.",
             "The affected subject may be an event, identity, secret, or body of previously understood information.",
             "Successes determine the complexity of knowledge suppressed and the strength of the resulting concealment.",
@@ -1952,7 +2051,7 @@
           ])
         ]),
         L(8, [
-          W(12, "The Unwritten Tale", "Cost: 4 Rouse Checks · Roll: Obfuscate + Intelligence", [
+          W(11, "The Unwritten Tale", "Cost: 4 Rouse Checks · Roll: Obfuscate + Intelligence", [
             "Suppress a coherent conceptual category, together with the desire to investigate or understand it, from the collective consciousness of creatures across a vast region.",
             "The affected area can reach approximately city size.",
             "Successes determine the concept's depth of suppression and the number of minds affected.",
@@ -2780,7 +2879,7 @@
   function glCost(c) {
     if (c === "P") return "Passive";
     if (c === "F") return "Free";
-    return c.replace(/^(\d+(?:–\d+)?)R(\+?)/, function (m, a, plus) { return a + (plus ? "+" : "") + " Rouse"; });
+    return c.replace(/^(\+?)(\d+(?:–\d+)?)R(\+?)/, function (m, pre, a, plus) { return pre + a + (plus ? "+" : "") + " Rouse"; });
   }
   function glRoll(r) {
     var L = window.GLOSSARY_LEGEND;
@@ -2797,6 +2896,8 @@
   // One block of a power's text: a paragraph, a bullet list, or a small table.
   function glBlock(bl) {
     if (typeof bl === "string") return glMake("p", "gl-pt", bl);
+    if (bl.h) return glMake("h4", "gl-h", bl.h);
+    if (bl.m) return glMake("p", "gl-pm", bl.m);
     if (bl.list) {
       var ul = glMake("ul", "gl-pl");
       bl.list.forEach(function (t) { ul.appendChild(glMake("li", null, t)); });
@@ -2837,6 +2938,14 @@
     glPage.appendChild(glMake("h2", "gl-name", glSel));
     glPage.appendChild(glMake("p", "gl-desc", G[glSel].desc + (own2 ? " You have " + own2 + (own2 === 1 ? " dot." : " dots.") : "")));
     G[glSel].notes.forEach(function (t) { glPage.appendChild(glMake("p", "gl-note", t)); });
+    if (G[glSel].core) {
+      var det = glMake("details", "gl-core");
+      det.appendChild(glMake("summary", null, G[glSel].core.title));
+      var cb = glMake("div", "gl-core-body");
+      G[glSel].core.blocks.forEach(function (bl) { cb.appendChild(glBlock(bl)); });
+      det.appendChild(cb);
+      glPage.appendChild(det);
+    }
     G[glSel].levels.forEach(function (lv) {
       var sec = glMake("div", "gl-sec" + (lv.dot <= own2 ? " own" : ""));
       var box = glMake("div", "gl-box");
@@ -2846,6 +2955,8 @@
       for (var k = 0; k < lv.dot; k++) pips.appendChild(glMake("span", "gl-pip"));
       box.appendChild(pips);
       var body = glMake("div");
+      if (lv.title) body.appendChild(glMake("h3", "gl-lt", lv.title));
+      lv.intro.forEach(function (bl) { body.appendChild(glBlock(bl)); });
       lv.powers.forEach(function (p) {
         var pw = glMake("div", "gl-pw");
         pw.appendChild(glMake("p", "gl-pn", p.name));
@@ -2931,7 +3042,10 @@
       d.appendChild(glMake("p", "dp-dots", new Array(lv.dot + 1).join("●")));
       lv.powers.forEach(function (p) {
         d.appendChild(glMake("p", "dp-pn", longPowerName(discKey, lv.dot, p)));
-        d.appendChild(glMake("p", "dp-pm", glCost(p.cost) + (p.roll ? " · " + glRoll(p.roll) : "")));
+        var parts = [];
+        if (p.cost) parts.push(glCost(p.cost));
+        if (p.roll) parts.push(glRoll(p.roll));
+        if (parts.length) d.appendChild(glMake("p", "dp-pm", parts.join(" · ")));
         d.appendChild(glMake("p", "dp-pt", p.text));
       });
       discPop.appendChild(d);
