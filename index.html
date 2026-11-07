@@ -867,7 +867,7 @@
   .lock.opening .lk-kb { animation-play-state: paused; transform: scale(1.3); transition: transform 1s ease-in; }
   .lk-img { inset: 0; background: url("lock-abbey.jpg") center / 100% 100% no-repeat; filter: saturate(1.12) contrast(1.08) brightness(0.95); }
 
-  .lk-glow { left: 49.4%; top: 71%; width: 11%; height: 32%; transform: translate(-50%, -50%); mix-blend-mode: screen;
+  .lk-glow { left: 49.4%; top: 69.5%; width: 9.5%; height: 24%; transform: translate(-50%, -50%); mix-blend-mode: screen;
     background: radial-gradient(ellipse at center, rgba(255, 196, 108, 0.6), rgba(255, 150, 60, 0.2) 46%, transparent 72%); animation: lk-flick 4.6s ease-in-out infinite; }
   @keyframes lk-flick { 0%, 100% { opacity: 0.85; } 14% { opacity: 0.55; } 22% { opacity: 1; } 47% { opacity: 0.7; } 63% { opacity: 0.95; } 80% { opacity: 0.6; } }
   .lk-moonglow { left: 64.25%; top: 28.3%; width: 10%; aspect-ratio: 1; transform: translate(-50%, -50%); mix-blend-mode: screen;
@@ -914,7 +914,7 @@
   .lk-sub { font-family: var(--display); font-weight: 400; margin: 0; font-size: clamp(1.8rem, 6vmin, 3.2rem); letter-spacing: 0.04em; color: #f1e5c8; text-shadow: 0 3px 14px rgba(0, 0, 0, 0.9), 0 0 24px rgba(220, 42, 62, 0.35); }
 
   .lk-prompt {
-    left: 50%; bottom: calc(5vh + env(safe-area-inset-bottom)); transform: translateX(-50%); pointer-events: auto;
+    left: 50%; bottom: calc(5vh + env(safe-area-inset-bottom)); transform: translateX(-50%); pointer-events: auto; white-space: nowrap;
     background: none; border: 0; padding: 10px 18px; color: #eadfc6; cursor: var(--cur-click, pointer);
     font-family: var(--ui); font-size: 0.74rem; letter-spacing: 0.3em; text-transform: uppercase;
     display: flex; flex-direction: column; align-items: center; gap: 4px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
