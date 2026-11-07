@@ -839,9 +839,117 @@
   @keyframes thud { 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } }
   @media (prefers-reduced-motion: reduce) { .splat circle, .health-card.thud { animation: none; opacity: 0; } }
 
+  /* ---------- Lock screen: swipe up (or scroll, click, press a key) to enter ---------- */
+  body.locked { overflow: hidden; }
+  .lock {
+    position: fixed; inset: 0; z-index: 3000; overflow: hidden; background: #07040d; touch-action: none;
+    cursor: var(--cur-click, pointer); user-select: none; -webkit-user-select: none;
+    transition: transform 0.95s cubic-bezier(0.76, 0, 0.18, 1); will-change: transform;
+  }
+  .lock.dragging { transition: none; }
+  .lock > * { position: absolute; pointer-events: none; }
+  .lk-sky { inset: 0; background: radial-gradient(130% 70% at 50% 108%, #7d1526 0%, #3d0c1d 26%, transparent 62%), linear-gradient(to bottom, #05030a 0%, #0d0716 40%, #1a0b1f 68%, #2b0e1d 100%); }
+  .lk-stars { inset: 0 0 42% 0; }
+  .lk-stars i { position: absolute; border-radius: 50%; background: #f6eedb; animation: lk-twinkle 3.4s ease-in-out infinite; }
+  @keyframes lk-twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.35); } }
+
+  .lk-moon {
+    width: clamp(120px, 24vmin, 290px); aspect-ratio: 1; left: 66%; top: 9vh; border-radius: 50%;
+    transform: translate(-50%, 0) scale(calc(1 + var(--lift, 0) * 0.16));
+    background: radial-gradient(circle at 36% 34%, #fffaf0 0%, #efe3c4 38%, #cfc1a0 72%, #a99b7d 100%);
+    box-shadow: 0 0 0 1px rgba(255, 248, 230, 0.2), 0 0 60px 18px rgba(236, 222, 188, 0.22), 0 0 170px 60px rgba(200, 40, 60, 0.2);
+    transition: transform 0.9s ease, filter 0.9s ease;
+  }
+  .lk-moon::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 42%, rgba(120, 104, 80, 0.32) 0 9%, transparent 10%),
+      radial-gradient(circle at 64% 30%, rgba(120, 104, 80, 0.26) 0 6%, transparent 7%),
+      radial-gradient(circle at 58% 66%, rgba(120, 104, 80, 0.3) 0 11%, transparent 12%),
+      radial-gradient(circle at 22% 70%, rgba(120, 104, 80, 0.22) 0 5%, transparent 6%);
+  }
+  .lock.opening .lk-moon { filter: brightness(1.25); transform: translate(-50%, -4vh) scale(1.22); }
+
+  .lk-cloud { height: 9vh; width: 46vw; border-radius: 50%; left: 0; background: radial-gradient(closest-side, rgba(125, 104, 156, 0.3), transparent); filter: blur(5px); animation: lk-drift 70s linear infinite; }
+  .lk-cloud.c1 { top: 15vh; }
+  .lk-cloud.c2 { top: 27vh; width: 38vw; opacity: 0.7; animation-duration: 96s; animation-delay: -34s; }
+  .lk-cloud.c3 { top: 6vh; width: 34vw; opacity: 0.6; animation-duration: 124s; animation-delay: -72s; }
+  @keyframes lk-drift { from { transform: translateX(-50vw); } to { transform: translateX(110vw); } }
+
+  .lk-hills { left: 0; width: 100%; }
+  .lk-hills.far { bottom: 17vh; height: 30vh; fill: #170e28; }
+  .lk-hills.near { bottom: 9vh; height: 26vh; fill: #0a0610; }
+  .lk-castle { right: 12%; bottom: 25vh; height: 38vh; aspect-ratio: 240 / 280; fill: #0a0610; }
+  .lk-castle .win { fill: #f7b85a; animation: lk-win 5s ease-in-out infinite; }
+  .lk-castle .win:nth-of-type(2n) { animation-delay: -1.7s; animation-duration: 3.8s; }
+  .lk-castle .win:nth-of-type(3n) { animation-delay: -3.1s; animation-duration: 6.4s; }
+  @keyframes lk-win { 0%, 100% { opacity: 0.95; } 46% { opacity: 0.55; } 52% { opacity: 1; } 78% { opacity: 0.7; } }
+  .lk-pines { left: 0; right: 0; bottom: 19vh; height: 14vh; }
+  .lk-pines i { position: absolute; bottom: 0; background: #070409; clip-path: polygon(50% 0, 62% 28%, 56% 28%, 72% 55%, 62% 55%, 82% 82%, 54% 82%, 54% 100%, 46% 100%, 46% 82%, 18% 82%, 38% 55%, 28% 55%, 44% 28%, 38% 28%); }
+
+  .lk-marsh { left: 0; right: 0; bottom: 0; height: 23vh; background: linear-gradient(to bottom, #0d0817 0%, #04020a 100%); overflow: hidden; }
+  .lk-marsh .lk-reflect {
+    position: absolute; top: 0; left: 66%; width: clamp(16px, 3.6vmin, 44px); height: 100%; transform: translateX(-50%);
+    background: repeating-linear-gradient(to bottom, rgba(240, 228, 190, 0.6) 0 2px, transparent 2px 7px);
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent 92%); mask-image: linear-gradient(to bottom, #000, transparent 92%);
+    animation: lk-shimmer 3.2s ease-in-out infinite;
+  }
+  @keyframes lk-shimmer { 0%, 100% { transform: translateX(-50%) scaleX(1); opacity: 0.85; } 50% { transform: translateX(-50%) scaleX(0.7); opacity: 0.55; } }
+  .lk-reeds i { position: absolute; bottom: -1px; width: 3px; background: #030208; transform-origin: 50% 100%; clip-path: polygon(50% 0, 100% 100%, 0 100%); animation: lk-sway var(--d, 4s) ease-in-out infinite alternate; animation-delay: var(--dl, 0s); }
+  @keyframes lk-sway { from { transform: rotate(-4deg); } to { transform: rotate(5deg); } }
+
+  .lk-fog { left: -20%; width: 140%; background: radial-gradient(50% 50% at 50% 60%, rgba(176, 166, 196, 0.34), transparent 72%); filter: blur(8px); animation: lk-fog 42s ease-in-out infinite alternate; }
+  .lk-fog.f1 { bottom: 7vh; height: 21vh; }
+  .lk-fog.f2 { bottom: -2vh; height: 17vh; opacity: 0.8; animation-duration: 58s; animation-direction: alternate-reverse; }
+  @keyframes lk-fog { from { transform: translateX(-7%); } to { transform: translateX(7%); } }
+
+  .lk-bat { width: clamp(28px, 4.4vmin, 58px); aspect-ratio: 2; top: var(--y, 20vh); left: -10vw; animation: lk-fly var(--t, 26s) linear infinite; animation-delay: var(--dl, 0s); }
+  .lk-bat.rev { left: 108vw; animation-name: lk-fly-r; }
+  .lk-bat svg, .lk-burst-bat svg { width: 100%; height: 100%; fill: #05030a; animation: lk-flap 0.3s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+  @keyframes lk-flap { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
+  @keyframes lk-fly { 0% { transform: translate(0, 0); } 25% { transform: translate(32vw, -4vh); } 50% { transform: translate(62vw, 3vh); } 75% { transform: translate(92vw, -5vh); } 100% { transform: translate(128vw, 1vh); } }
+  @keyframes lk-fly-r { 0% { transform: translate(0, 0); } 25% { transform: translate(-32vw, 4vh); } 50% { transform: translate(-62vw, -3vh); } 75% { transform: translate(-92vw, 5vh); } 100% { transform: translate(-128vw, -1vh); } }
+  .lk-burst-bat { left: 72%; top: 52vh; width: clamp(22px, 3.4vmin, 44px); aspect-ratio: 2; opacity: 0; animation: lk-burst 1.15s ease-in forwards paused; }
+  .lock.opening .lk-burst-bat { animation-play-state: running; }
+  @keyframes lk-burst { 0% { opacity: 0; transform: translate(0, 0) scale(0.4); } 14% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--bx, 0), var(--by, -60vh)) scale(1.2); } }
+
+  .lk-title { left: 0; right: 0; top: 50%; padding: 0 18px; text-align: center; transform: translateY(calc(-60% - var(--lift, 0) * 70px)); transition: opacity 0.45s ease, transform 0.6s ease; }
+  .lock.opening .lk-title { opacity: 0; transform: translateY(calc(-60% - 60px)); }
+  .lk-crest { width: clamp(48px, 9vmin, 84px); height: auto; display: block; margin: 0 auto 14px; filter: drop-shadow(0 0 14px rgba(200, 40, 60, 0.5)); }
+  .lk-eyebrow { font-family: var(--ui); font-size: clamp(0.6rem, 1.7vmin, 0.78rem); letter-spacing: 0.34em; text-transform: uppercase; color: #c8a45c; margin: 0 0 12px; }
+  .lk-h1 { font-family: var(--display); font-weight: 400; font-size: clamp(3rem, 11vmin, 6.6rem); line-height: 0.98; letter-spacing: 0.02em; margin: 0; color: #f5ebd5; text-shadow: 0 0 34px rgba(220, 42, 62, 0.5), 0 4px 20px rgba(0, 0, 0, 0.8); animation: candle 6s ease-in-out infinite; }
+  .lk-h1 em { color: #dc2a3e; font-style: italic; }
+
+  .lk-prompt {
+    left: 50%; bottom: calc(5vh + env(safe-area-inset-bottom)); transform: translateX(-50%); pointer-events: auto;
+    background: none; border: 0; padding: 10px 18px; color: #eadfc6; cursor: var(--cur-click, pointer);
+    font-family: var(--ui); font-size: 0.74rem; letter-spacing: 0.3em; text-transform: uppercase;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  }
+  .lk-prompt:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .lk-chev { width: 26px; height: 26px; fill: none; stroke: #eadfc6; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; animation: lk-chev 1.9s ease-in-out infinite; }
+  .lk-chev + .lk-chev { margin-top: -16px; animation-delay: 0.22s; opacity: 0.6; }
+  @keyframes lk-chev { 0%, 100% { transform: translateY(4px); opacity: 0.25; } 50% { transform: translateY(-4px); opacity: 1; } }
+  .lk-prompt .t-touch { display: none; }
+  @media (pointer: coarse) { .lk-prompt .t-touch { display: inline; } .lk-prompt .t-mouse { display: none; } }
+
+  @media (max-aspect-ratio: 1/1) {
+    .lk-moon { width: 38vw; left: 68%; top: 7vh; }
+    .lk-marsh .lk-reflect { left: 68%; }
+    .lk-castle { right: 3%; bottom: 26vh; height: 30vh; }
+    .lk-title { top: 46%; }
+    .lk-pines { bottom: 20vh; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lock, .lock * { animation: none !important; }
+    .lock { transition: opacity 0.5s ease; }
+    .lock.opening { opacity: 0; transform: none !important; }
+    .lock .lk-stars i { opacity: 0.8; }
+  }
+
   /* ---------- Print ---------- */
   @media print {
-    .fx i { display: none !important; }
+    .fx > *, .lock { display: none !important; }
     .sec-head::after { display: none; }
     h1, .sec-head h2 { text-shadow: none; animation: none; }
     body { background: #fff; color: #000; }
@@ -863,6 +971,50 @@
 </style>
 
 <div class="fx" aria-hidden="true"><i class="fx-vig"></i><i class="fx-grain"></i><canvas class="fx-fog" width="176" height="80"></canvas><i class="fx-desat"></i><i class="fx-hunger"></i><canvas class="fx-cracks"></canvas></div>
+<div class="lock" id="lockScreen" aria-label="Kindred of Holstein: swipe up or click to enter">
+  <div class="lk-sky"></div>
+  <div class="lk-stars" id="lkStars"></div>
+  <div class="lk-moon"></div>
+  <div class="lk-cloud c1"></div><div class="lk-cloud c2"></div><div class="lk-cloud c3"></div>
+  <svg class="lk-hills far" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 200V122C70 92 130 62 220 84S380 132 470 102 620 42 720 72 900 122 1000 92V200Z"/></svg>
+  <svg class="lk-castle" viewBox="0 0 240 280" aria-hidden="true">
+    <rect x="40" y="172" width="170" height="108"/>
+    <rect x="30" y="122" width="40" height="158"/><polygon points="26,124 50,62 74,124"/>
+    <rect x="100" y="92" width="44" height="188"/><polygon points="96,94 122,20 148,94"/>
+    <rect x="170" y="107" width="42" height="173"/><polygon points="166,109 191,47 216,109"/>
+    <path d="M70 172v-10h8v10h8v-10h8v10h8v-10h8v10h8v-10h8v10z M146 172v-10h8v10h8v-10h8v10z"/>
+    <path d="M122 20V3l15 5-15 5" fill="#8f1a26"/>
+    <path d="M112 280v-28a10 10 0 0 1 20 0v28z" fill="#000"/>
+    <rect class="win" x="118" y="118" width="7" height="13"/>
+    <rect class="win" x="47" y="150" width="6" height="11"/>
+    <rect class="win" x="187" y="140" width="6" height="11"/>
+    <rect class="win" x="189" y="192" width="6" height="11"/>
+    <rect class="win" x="62" y="200" width="6" height="11"/>
+    <rect class="win" x="112" y="206" width="7" height="12"/>
+    <rect class="win" x="148" y="218" width="6" height="11"/>
+    <rect class="win" x="48" y="94" width="5" height="9"/>
+  </svg>
+  <svg class="lk-hills near" viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 200V112C110 72 200 102 300 82S520 42 640 86 860 122 1000 72V200Z"/></svg>
+  <div class="lk-pines" id="lkPines"></div>
+  <div class="lk-marsh"><div class="lk-reflect"></div><div class="lk-reeds" id="lkReeds"></div></div>
+  <div class="lk-fog f1"></div><div class="lk-fog f2"></div>
+  <div class="lk-bat" style="--y:19vh;--t:24s;--dl:-3s"><svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg></div>
+  <div class="lk-bat" style="--y:31vh;--t:33s;--dl:-16s"><svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg></div>
+  <div class="lk-bat rev" style="--y:24vh;--t:29s;--dl:-9s"><svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg></div>
+  <div class="lk-bat rev" style="--y:12vh;--t:38s;--dl:-24s"><svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg></div>
+  <div id="lkBurst"></div>
+  <div class="lk-title">
+    <svg class="lk-crest" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="36" fill="none" stroke="#c8a45c" stroke-width="1.4"/><circle cx="40" cy="40" r="31" fill="none" stroke="#c8a45c" stroke-opacity=".5" stroke-width=".8" stroke-dasharray="2 4"/><path d="M40 14C40 14 24 36 24 47C24 56 31 63 40 63C49 63 56 56 56 47C56 36 40 14 40 14Z" fill="#a4162a" stroke="#e4b9bd" stroke-opacity=".5"/><path d="M33 46C33 52 36 56 40 57" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/></svg>
+    <p class="lk-eyebrow">Vampire · The Dark Ages · Holstein</p>
+    <h1 class="lk-h1">Kindred <em>of</em> Holstein</h1>
+  </div>
+  <button class="lk-prompt" id="lkPrompt" type="button">
+    <svg class="lk-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>
+    <svg class="lk-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>
+    <span class="t-touch">Swipe up to enter</span><span class="t-mouse">Scroll or click to enter</span>
+  </button>
+</div>
+
 
 <div class="gate" id="authGate">
   <div class="gate-box">
@@ -4166,6 +4318,109 @@
     paint(now / 1000, hunger);
   }
   if (reduced) paint(3, 0); else requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+// ---- Lock screen: drag it up like a phone lock screen, or scroll / click / press a key ----
+(function () {
+  "use strict";
+  var el = document.getElementById("lockScreen");
+  if (!el) return;
+  if (/[?&]nolock\b/.test(location.search)) { el.remove(); return; }
+  var body = document.body;
+  body.classList.add("locked");
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function fill(id, count, make) {
+    var host = document.getElementById(id);
+    if (!host) return;
+    for (var i = 0; i < count; i++) host.appendChild(make(i));
+  }
+  var W = window.innerWidth;
+  fill("lkStars", 70, function () {
+    var s = document.createElement("i"), z = rnd(1, 2.6);
+    s.style.cssText = "left:" + rnd(0, 100).toFixed(1) + "%;top:" + rnd(0, 100).toFixed(1) + "%;width:" + z.toFixed(1) + "px;height:" + z.toFixed(1) + "px;animation-delay:" + (-rnd(0, 6)).toFixed(2) + "s;animation-duration:" + rnd(2.4, 5.2).toFixed(2) + "s";
+    return s;
+  });
+  fill("lkPines", Math.max(10, Math.round(W / 34)), function () {
+    var t = document.createElement("i"), h = rnd(5, 13);
+    t.style.cssText = "left:" + rnd(-2, 100).toFixed(1) + "%;height:" + h.toFixed(1) + "vh;width:" + (h * 0.55).toFixed(1) + "vh;";
+    return t;
+  });
+  fill("lkReeds", Math.max(24, Math.round(W / 13)), function () {
+    var r = document.createElement("i"), h = rnd(6, 17);
+    r.style.cssText = "left:" + rnd(0, 100).toFixed(1) + "%;height:" + h.toFixed(1) + "vh;--d:" + rnd(3, 6).toFixed(2) + "s;--dl:" + (-rnd(0, 5)).toFixed(2) + "s";
+    return r;
+  });
+  var BAT = '<svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg>';
+  fill("lkBurst", 12, function () {
+    var b = document.createElement("div");
+    b.className = "lk-burst-bat";
+    b.innerHTML = BAT;
+    b.style.cssText = "--bx:" + rnd(-55, 35).toFixed(0) + "vw;--by:" + rnd(-75, -25).toFixed(0) + "vh;animation-delay:" + rnd(0, 0.35).toFixed(2) + "s;";
+    return b;
+  });
+  var burst = document.getElementById("lkBurst");
+  if (burst) { while (burst.firstChild) el.insertBefore(burst.firstChild, burst); }
+
+  var opened = false, dragging = false, moved = false, startY = 0, dy = 0, t0 = 0;
+  function vh() { return window.innerHeight; }
+  function lift(px) {
+    el.style.transform = "translateY(" + (-px) + "px)";
+    el.style.setProperty("--lift", Math.min(1, px / vh()).toFixed(3));
+  }
+  function spring() { el.style.transform = ""; el.style.setProperty("--lift", "0"); }
+
+  function open() {
+    if (opened) return;
+    opened = true;
+    el.classList.remove("dragging");
+    el.classList.add("opening");
+    el.style.transform = "translateY(-104%)";
+    var finished = false;
+    function done() {
+      if (finished) return;
+      finished = true;
+      el.remove();
+      body.classList.remove("locked");
+      var g = document.getElementById("gatePw");
+      if (g && g.offsetParent) { try { g.focus(); } catch (e) {} }
+    }
+    el.addEventListener("transitionend", function (ev) { if (ev.target === el) done(); });
+    setTimeout(done, 1500);
+  }
+
+  el.addEventListener("pointerdown", function (ev) {
+    if (opened) return;
+    dragging = true; moved = false; startY = ev.clientY; dy = 0; t0 = performance.now();
+    el.classList.add("dragging");
+    try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+  });
+  el.addEventListener("pointermove", function (ev) {
+    if (!dragging) return;
+    dy = Math.max(0, startY - ev.clientY);
+    if (dy > 6) moved = true;
+    lift(dy);
+  });
+  el.addEventListener("pointerup", function () {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove("dragging");
+    var speed = dy / Math.max(1, performance.now() - t0);
+    if (!moved || dy > vh() * 0.2 || (speed > 0.6 && dy > 40)) open(); else spring();
+  });
+  el.addEventListener("pointercancel", function () {
+    if (!dragging) return;
+    dragging = false; el.classList.remove("dragging"); spring();
+  });
+  el.addEventListener("wheel", function (ev) { if (ev.deltaY > 0) open(); }, { passive: true });
+  document.addEventListener("keydown", function (ev) {
+    if (opened || !document.getElementById("lockScreen")) return;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey || /^(Tab|Shift|Control|Alt|Meta|F\d+)$/.test(ev.key)) return;
+    ev.preventDefault();
+    open();
+  });
 })();
 </script>
 
