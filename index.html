@@ -795,13 +795,13 @@
 
   /* Fog: two layers of soft cloud noise drifting at different speeds, thickest at the bottom of the screen */
   .fx > .fx-fog {
-    inset: auto 0 0 0; height: 66vh; overflow: hidden; opacity: 0.8;
+    inset: auto 0 0 0; height: 58vh; overflow: hidden; opacity: 0.42;
     -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.72) 40%, transparent 100%);
     mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.72) 40%, transparent 100%);
   }
   .fx-fog::before, .fx-fog::after {
     content: ""; position: absolute; bottom: -6vh; height: 100%; background-repeat: repeat-x; will-change: transform;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='520'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0032 .0095' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .74 0 0 0 0 .72 0 0 0 0 .84 2.4 0 0 0 -.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='520'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.0032 .0095' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .66 0 0 0 0 .66 0 0 0 0 .78 1.9 0 0 0 -.72'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   }
   .fx-fog::before { left: 0; width: calc(100% + 1400px); background-size: 1400px 100%; opacity: 0.85; animation: fog-a 110s linear infinite; }
   .fx-fog::after { left: 0; width: calc(100% + 1900px); background-size: 1900px 100%; opacity: 0.6; animation: fog-b 160s linear infinite; }
@@ -812,15 +812,15 @@
 
   /* The heartbeat: a soft red glow breathing in from the screen edges. It shows from Hunger 1 and beats faster as Hunger climbs. */
   .fx-hunger {
-    box-shadow: inset 0 0 min(22vw, 260px) min(5vw, 50px) rgba(170, 10, 30, 0.9), inset 0 0 60px rgba(120, 4, 18, 0.55);
+    box-shadow: inset 0 0 min(15vw, 190px) rgba(150, 8, 26, 0.85), inset 0 0 36px rgba(110, 4, 16, 0.3);
     opacity: 0; animation: heartbeat calc(2.9s - var(--hunger, 0) * 2.1s) ease-in-out infinite;
   }
   @keyframes heartbeat {
-    0%, 100% { opacity: calc(var(--hfx, 0) * 0.5); }
-    12% { opacity: var(--hfx, 0); }
-    24% { opacity: calc(var(--hfx, 0) * 0.6); }
-    36% { opacity: calc(var(--hfx, 0) * 0.92); }
-    62% { opacity: calc(var(--hfx, 0) * 0.45); }
+    0%, 100% { opacity: calc(var(--hfx, 0) * 0.3); }
+    12% { opacity: calc(var(--hfx, 0) * 0.78); }
+    24% { opacity: calc(var(--hfx, 0) * 0.42); }
+    36% { opacity: calc(var(--hfx, 0) * 0.7); }
+    62% { opacity: calc(var(--hfx, 0) * 0.28); }
   }
   @media (prefers-reduced-motion: reduce) {
     .fx-fog::before, .fx-fog::after { animation: none; }
@@ -2857,20 +2857,20 @@
     var d = d0, left = len;
     while (left > 2 && w > 0.3) {
       var step = Math.min(left, 4 + rnd() * 8);
-      ang += (rnd() - 0.5) * 0.75;
+      ang += (rnd() - 0.5) * 0.34 + (rnd() < 0.09 ? (rnd() < 0.5 ? -1 : 1) * (0.5 + rnd() * 0.5) : 0); // mostly straight, with sharp kinks like split glass
       var nx = x + Math.cos(ang) * step, ny = y + Math.sin(ang) * step;
       d += step; left -= step;
       c.segs.push({ x1: x, y1: y, x2: nx, y2: ny, w: w, d: d });
-      x = nx; y = ny; w *= 0.972;
-      if (depth < 3 && rnd() < 0.13) {
-        growCrack(c, x, y, ang + (rnd() < 0.5 ? -1 : 1) * (0.4 + rnd() * 0.8), left * (0.4 + rnd() * 0.4), w * 0.72, depth + 1, d, rnd);
+      x = nx; y = ny; w *= 0.962;
+      if (depth < 3 && rnd() < 0.12) {
+        growCrack(c, x, y, ang + (rnd() < 0.5 ? -1 : 1) * (0.45 + rnd() * 0.9), left * (0.35 + rnd() * 0.4), w * 0.7, depth + 1, d, rnd);
       }
     }
     if (d > c.total) c.total = d;
   }
 
   function planCracks(W, H) {
-    var rnd = crackRng(7741), size = Math.min(W, H), N = 30, plan = [];
+    var rnd = crackRng(7741), size = Math.min(W, H), N = 38, plan = [];
     for (var i = 0; i < N; i++) {
       var x, y, base;
       if (i < 4) { // the first four start in the corners and point at the middle
@@ -2884,8 +2884,8 @@
         else { x = 0; y = t * H; base = 0; }
         base += (rnd() - 0.5) * 0.9;
       }
-      var c = { segs: [], total: 0, thr: (i / N) * 0.82 };
-      growCrack(c, x, y, base, size * (0.2 + rnd() * 0.38), 1.5 + rnd() * 1.7, 0, 0, rnd);
+      var c = { segs: [], total: 0, thr: (i / N) * 0.78 };
+      growCrack(c, x, y, base, size * (0.14 + rnd() * 0.3), 0.9 + rnd() * 1.0, 0, 0, rnd);
       plan.push(c);
     }
     return plan;
@@ -2909,7 +2909,7 @@
       var f = Math.max(0, Math.min(1, (loss - c.thr) / 0.2));
       if (f <= 0) return;
       var lim = f * c.total, live = c.segs.filter(function (s) { return s.d <= lim; });
-      ctx.shadowColor = "rgba(0,0,0,0.65)"; ctx.shadowBlur = 5; ctx.strokeStyle = "rgba(5,3,3,0.96)";
+      ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 3; ctx.strokeStyle = "rgba(5,3,3,0.9)";
       live.forEach(function (s) { ctx.lineWidth = s.w; ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); });
       ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(238,228,210,0.24)";
       live.forEach(function (s) { ctx.lineWidth = Math.max(0.5, s.w * 0.32); ctx.beginPath(); ctx.moveTo(s.x1 + 0.9, s.y1 + 0.9); ctx.lineTo(s.x2 + 0.9, s.y2 + 0.9); ctx.stroke(); });
