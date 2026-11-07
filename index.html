@@ -726,6 +726,9 @@
     border-radius: 999px; padding: 7px 14px; cursor: var(--cur-click, pointer);
   }
   .theme-toggle:hover { border-color: var(--blood); color: var(--ink); }
+  .lock-btn { width: 32px; height: 32px; padding: 0; display: inline-grid; place-items: center; }
+  .lock-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 600px) { .header-tools .lock-btn { width: 36px; } }
 
   footer.foot { text-align: center; font-size: 0.78rem; color: var(--ink-muted); margin-top: 8px; }
 
@@ -1023,6 +1026,7 @@
     <div class="header-tools">
       <button class="theme-toggle" id="descToggle" type="button">Show details</button>
       <button class="theme-toggle" id="themeToggle" type="button">Toggle theme</button>
+      <button class="theme-toggle lock-btn" id="lockBtn" type="button" title="Lock screen (L)" aria-label="Lock screen"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
     </div>
   </div>
 </nav>
@@ -4299,98 +4303,127 @@
 </script>
 
 <script>
-// ---- Lock screen: drag it up like a phone lock screen, or scroll / click / press a key ----
+// ---- Lock screen: drag it up like a phone lock screen, or scroll / click / press a key.
+//      Press L (or tap the padlock in the top bar) to lock again. ----
 (function () {
   "use strict";
-  var el = document.getElementById("lockScreen");
-  if (!el) return;
-  if (/[?&]nolock\b/.test(location.search) || document.documentElement.classList.contains("lock-seen")) { el.remove(); return; }
-  var body = document.body;
-  body.classList.add("locked");
+  var first = document.getElementById("lockScreen");
+  if (!first) return;
+  var root = document.documentElement, body = document.body;
+  var proto = first.cloneNode(true); // a clean copy, kept for locking again later
+  var current = null;
 
   function rnd(a, b) { return a + Math.random() * (b - a); }
-  function fill(id, count, make) {
-    var host = document.getElementById(id);
-    if (!host) return;
-    for (var i = 0; i < count; i++) host.appendChild(make(i));
-  }
-  // A few pale motes of ash drift down through the scene.
-  fill("lkMotes", 34, function () {
-    var m = document.createElement("i"), z = rnd(1.5, 3.6);
-    m.className = "lk-mote";
-    m.style.cssText = "position:absolute;left:" + rnd(0, 100).toFixed(1) + "vw;width:" + z.toFixed(1) + "px;height:" + z.toFixed(1) + "px;--t:" + rnd(16, 34).toFixed(1) + "s;--dl:" + (-rnd(0, 30)).toFixed(1) + "s;--dx:" + rnd(-60, 60).toFixed(0) + "px";
-    return m;
-  });
   var BAT = '<svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0-2C-3-7-9-9-16-5-12-4-11-1-9 2-7 0-4 0-2 3-1 2 1 2 2 3 4 0 7 0 9 2 11-1 12-4 16-5 9-9 3-7 0-2Z"/><ellipse cx="0" cy="1" rx="2.2" ry="4"/></svg>';
-  var burst = document.getElementById("lkBurst");
-  if (burst) { // a flock bursts out of the abbey as the screen lifts
-    for (var i = 0; i < 12; i++) {
+
+  function mount(el) {
+    current = el;
+    body.classList.add("locked");
+
+    // A few pale motes of ash drift down through the scene.
+    var motes = el.querySelector("#lkMotes");
+    for (var i = 0; motes && i < 34; i++) {
+      var m = document.createElement("i"), z = rnd(1.5, 3.6);
+      m.className = "lk-mote";
+      m.style.cssText = "position:absolute;left:" + rnd(0, 100).toFixed(1) + "vw;width:" + z.toFixed(1) + "px;height:" + z.toFixed(1) + "px;--t:" + rnd(16, 34).toFixed(1) + "s;--dl:" + (-rnd(0, 30)).toFixed(1) + "s;--dx:" + rnd(-60, 60).toFixed(0) + "px";
+      motes.appendChild(m);
+    }
+    // A flock waits to burst out of the abbey as the screen lifts.
+    var burst = el.querySelector("#lkBurst");
+    for (var j = 0; burst && j < 12; j++) {
       var b = document.createElement("div");
       b.className = "lk-burst-bat";
       b.innerHTML = BAT;
       b.style.cssText = "--bx:" + rnd(-50, 50).toFixed(0) + "vw;--by:" + rnd(-85, -35).toFixed(0) + "vh;animation-delay:" + rnd(0, 0.4).toFixed(2) + "s;";
       el.insertBefore(b, burst);
     }
-  }
 
-  var opened = false, dragging = false, moved = false, startY = 0, dy = 0, t0 = 0;
-  function vh() { return window.innerHeight; }
-  function lift(px) {
-    el.style.transform = "translateY(" + (-px) + "px)";
-    el.style.setProperty("--lift", Math.min(1, px / vh()).toFixed(3));
-  }
-  function spring() { el.style.transform = ""; el.style.setProperty("--lift", "0"); }
-
-  function open() {
-    if (opened) return;
-    opened = true;
-    try { sessionStorage.setItem("kindred-lock-seen", "1"); } catch (e) {} // choosing a character reloads the page; don't show the lock again
-    el.classList.remove("dragging");
-    el.classList.add("opening");
-    el.style.transform = "translateY(-104%)";
-    var finished = false;
-    function done() {
-      if (finished) return;
-      finished = true;
-      el.remove();
-      body.classList.remove("locked");
-      var g = document.getElementById("gatePw");
-      if (g && g.offsetParent) { try { g.focus(); } catch (e) {} }
+    var opened = false, dragging = false, moved = false, startY = 0, dy = 0, t0 = 0, born = performance.now();
+    function vh() { return window.innerHeight; }
+    function lift(px) {
+      el.style.transform = "translateY(" + (-px) + "px)";
+      el.style.setProperty("--lift", Math.min(1, px / vh()).toFixed(3));
     }
-    el.addEventListener("transitionend", function (ev) { if (ev.target === el) done(); });
-    setTimeout(done, 1500);
+    function spring() { el.style.transform = ""; el.style.setProperty("--lift", "0"); }
+
+    function onKey(ev) {
+      if (opened || performance.now() - born < 350) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey || /^(Tab|Shift|Control|Alt|Meta|F\d+)$/.test(ev.key)) return;
+      ev.preventDefault();
+      open();
+    }
+    document.addEventListener("keydown", onKey);
+
+    function open() {
+      if (opened) return;
+      opened = true;
+      try { sessionStorage.setItem("kindred-lock-seen", "1"); } catch (e) {} // choosing a character reloads the page; don't show the lock again
+      el.classList.remove("dragging");
+      el.classList.add("opening");
+      el.style.transform = "translateY(-104%)";
+      var finished = false;
+      function done() {
+        if (finished) return;
+        finished = true;
+        document.removeEventListener("keydown", onKey);
+        el.remove();
+        current = null;
+        body.classList.remove("locked");
+        var g = document.getElementById("gatePw");
+        if (g && g.offsetParent) { try { g.focus(); } catch (e) {} }
+      }
+      el.addEventListener("transitionend", function (ev) { if (ev.target === el) done(); });
+      setTimeout(done, 1500);
+    }
+
+    el.addEventListener("pointerdown", function (ev) {
+      if (opened) return;
+      dragging = true; moved = false; startY = ev.clientY; dy = 0; t0 = performance.now();
+      el.classList.add("dragging");
+      try { el.setPointerCapture(ev.pointerId); } catch (e) {}
+    });
+    el.addEventListener("pointermove", function (ev) {
+      if (!dragging) return;
+      dy = Math.max(0, startY - ev.clientY);
+      if (dy > 6) moved = true;
+      lift(dy);
+    });
+    el.addEventListener("pointerup", function () {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("dragging");
+      var speed = dy / Math.max(1, performance.now() - t0);
+      if (!moved || dy > vh() * 0.2 || (speed > 0.6 && dy > 40)) open(); else spring();
+    });
+    el.addEventListener("pointercancel", function () {
+      if (!dragging) return;
+      dragging = false; el.classList.remove("dragging"); spring();
+    });
+    el.addEventListener("wheel", function (ev) { if (ev.deltaY > 0) open(); }, { passive: true });
   }
 
-  el.addEventListener("pointerdown", function (ev) {
-    if (opened) return;
-    dragging = true; moved = false; startY = ev.clientY; dy = 0; t0 = performance.now();
-    el.classList.add("dragging");
-    try { el.setPointerCapture(ev.pointerId); } catch (e) {}
-  });
-  el.addEventListener("pointermove", function (ev) {
-    if (!dragging) return;
-    dy = Math.max(0, startY - ev.clientY);
-    if (dy > 6) moved = true;
-    lift(dy);
-  });
-  el.addEventListener("pointerup", function () {
-    if (!dragging) return;
-    dragging = false;
-    el.classList.remove("dragging");
-    var speed = dy / Math.max(1, performance.now() - t0);
-    if (!moved || dy > vh() * 0.2 || (speed > 0.6 && dy > 40)) open(); else spring();
-  });
-  el.addEventListener("pointercancel", function () {
-    if (!dragging) return;
-    dragging = false; el.classList.remove("dragging"); spring();
-  });
-  el.addEventListener("wheel", function (ev) { if (ev.deltaY > 0) open(); }, { passive: true });
+  // Lock again: the L key (when you are not typing in a field) or the padlock button.
+  function show() {
+    if (current) return;
+    root.classList.remove("lock-seen");
+    var el = proto.cloneNode(true);
+    body.appendChild(el);
+    mount(el);
+  }
+  window.KindredLock = show;
+  var btn = document.getElementById("lockBtn");
+  if (btn) btn.addEventListener("click", show);
   document.addEventListener("keydown", function (ev) {
-    if (opened || !document.getElementById("lockScreen")) return;
-    if (ev.ctrlKey || ev.metaKey || ev.altKey || /^(Tab|Shift|Control|Alt|Meta|F\d+)$/.test(ev.key)) return;
-    ev.preventDefault();
-    open();
+    if (current || (ev.key !== "l" && ev.key !== "L") || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    var a = document.activeElement;
+    if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+    var dice = document.getElementById("diceModal");
+    if (dice && !dice.hidden) return;
+    show();
   });
+
+  if (/[?&]nolock\b/.test(location.search) || root.classList.contains("lock-seen")) first.remove();
+  else mount(first);
 })();
 </script>
 
