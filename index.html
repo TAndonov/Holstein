@@ -770,7 +770,7 @@
   .dot.xp-bought.filled::after {
     background:
       radial-gradient(ellipse 26% 18% at 34% 62%, rgba(255, 255, 255, 0.62), transparent 100%),
-      radial-gradient(circle at 42% 68%, #ff9aa5 0%, #f2495e 52%, #c8283c 100%);
+      radial-gradient(circle at 42% 68%, #ff7a88 0%, #ee2f45 52%, #bf1c32 100%);
   }
   @media (max-width: 600px) {
     .dot { width: 25px; height: 31px; }
@@ -790,7 +790,7 @@
 
   /* Fog: real evolving cloud noise (drawn by the fog script at low resolution and scaled up smooth), thickest at the bottom */
   .fx > .fx-fog {
-    inset: auto 0 0 0; width: 100%; height: 62vh; opacity: 0.85;
+    inset: auto 0 0 0; width: 100%; height: 52vh; opacity: 0.5;
     -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
     mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 45%, transparent 100%);
   }
@@ -2900,6 +2900,12 @@
       ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(238,228,210,0.3)";
       live.forEach(function (s) { ctx.lineWidth = Math.max(0.5, s.w * 0.32); ctx.beginPath(); ctx.moveTo(s.x1 + 0.9, s.y1 + 0.9); ctx.lineTo(s.x2 + 0.9, s.y2 + 0.9); ctx.stroke(); });
     });
+    // Keep the middle of the screen clean so the text stays readable: cracks fade out towards the centre.
+    var rad = Math.max(W, H) * 0.62, g = ctx.createRadialGradient(W / 2, H / 2, rad * 0.12, W / 2, H / 2, rad);
+    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(0.42, "rgba(0,0,0,0.12)"); g.addColorStop(0.75, "rgba(0,0,0,0.85)"); g.addColorStop(1, "rgba(0,0,0,1)");
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "source-over";
   }
   var crackResizeTimer = 0;
   window.addEventListener("resize", function () {
@@ -4136,14 +4142,14 @@
 
   function paint(t, hunger) {
     // The fog takes on a faint blood tint as Hunger grows.
-    var R = 150 + 70 * hunger, G = 148 - 70 * hunger, B = 172 - 90 * hunger;
+    var R = 158 + 28 * hunger, G = 156 - 30 * hunger, B = 178 - 40 * hunger;
     var x, y, i = 0, n, a, vf;
     for (y = 0; y < H; y++) {
       vf = Math.pow(y / (H - 1), 1.25); // thickest at the bottom
       for (x = 0; x < W; x++) {
-        n = fbm(x / W * 3.6 + t * 0.16, y / H * 1.8, t * 0.11);
-        a = (n - 0.34) / 0.36; a = a < 0 ? 0 : a > 1 ? 1 : a; a = a * a * (3 - 2 * a);
-        px[i] = R; px[i + 1] = G; px[i + 2] = B; px[i + 3] = a * vf * 235;
+        n = fbm(x / W * 4.2 + t * 0.2, y / H * 2.1, t * 0.12);
+        a = (n - 0.3) / 0.34; a = a < 0 ? 0 : a > 1 ? 1 : a; a = a * a * (3 - 2 * a);
+        px[i] = R; px[i + 1] = G; px[i + 2] = B; px[i + 3] = a * vf * 200;
         i += 4;
       }
     }
