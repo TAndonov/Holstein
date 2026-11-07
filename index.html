@@ -1,6 +1,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kindred of Holstein — Character Builder</title>
+<script>
+// Dark is the default look; anyone who picked light before keeps it. Runs before first paint so there is no flash.
+(function () {
+  var t = null;
+  try { t = localStorage.getItem("kindred-theme"); } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #e4d9bf;
@@ -29,24 +40,24 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #100d0b;
-      --bg-2: #0a0807;
-      --surface: #1a1512;
-      --surface-2: #221b16;
+      --bg: #0c0809;
+      --bg-2: #070405;
+      --surface: #150f10;
+      --surface-2: #1d1415;
       --ink: #ece1cd;
       --ink-soft: #d3c5aa;
       --ink-muted: #98876d;
-      --line: #382c22;
-      --line-soft: #2b221a;
-      --blood: #bb2233;
-      --blood-strong: #cf2a3c;
+      --line: #3b2a2a;
+      --line-soft: #2a1e1f;
+      --blood: #c0202f;
+      --blood-strong: #dc2a3e;
       --gold: #c8a45c;
       --gold-bright: #d8b76c;
       --good: #7fa05f;
       --xp: #a992e0;
       --xp-strong: #c3aef0;
-      --dot-empty: #2a2019;
-      --dot-empty-ring: #4a3a2b;
+      --dot-empty: #241a1a;
+      --dot-empty-ring: #4d3a38;
       --shadow: rgba(0, 0, 0, 0.5);
       --focus: #d8b76c;
     }
@@ -59,11 +70,11 @@
     --dot-empty: #cabb95; --dot-empty-ring: #b09a6c; --shadow: rgba(43,33,24,0.16); --focus: #a4162a;
   }
   :root[data-theme="dark"] {
-    --bg: #100d0b; --bg-2: #0a0807; --surface: #1a1512; --surface-2: #221b16;
-    --ink: #ece1cd; --ink-soft: #d3c5aa; --ink-muted: #98876d; --line: #382c22; --line-soft: #2b221a;
-    --blood: #bb2233; --blood-strong: #cf2a3c; --gold: #c8a45c; --gold-bright: #d8b76c; --good: #7fa05f;
+    --bg: #0c0809; --bg-2: #070405; --surface: #150f10; --surface-2: #1d1415;
+    --ink: #ece1cd; --ink-soft: #d3c5aa; --ink-muted: #98876d; --line: #3b2a2a; --line-soft: #2a1e1f;
+    --blood: #c0202f; --blood-strong: #dc2a3e; --gold: #c8a45c; --gold-bright: #d8b76c; --good: #7fa05f;
     --xp: #a992e0; --xp-strong: #c3aef0;
-    --dot-empty: #2a2019; --dot-empty-ring: #4a3a2b; --shadow: rgba(0,0,0,0.5); --focus: #d8b76c;
+    --dot-empty: #241a1a; --dot-empty-ring: #4d3a38; --shadow: rgba(0,0,0,0.5); --focus: #d8b76c;
   }
 
   * { box-sizing: border-box; }
@@ -721,8 +732,100 @@
     * { transition: none !important; }
   }
 
+  /* ---------- Mood pack: blood, fog, a heartbeat that follows Hunger, a page that fades with Humanity ---------- */
+  :root { --display: "Pirata One", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; }
+  h1, .sec-head h2, .gl-name, .gate-box h2, .picker-box h2, .dice-box h2 { font-family: var(--display); font-weight: 400; letter-spacing: 0.03em; }
+  h1 { font-size: clamp(2.6rem, 7.5vw, 4.6rem); }
+  .sec-head h2 { font-size: 1.85rem; }
+  @media (max-width: 600px) { .sec-head h2 { font-size: 1.6rem; } .gl-name { font-size: 1.9rem; } }
+  .gl-name { font-size: 2.1rem; }
+
+  /* Blood-drip rule under every section heading */
+  .sec-head::after {
+    content: ""; flex: 0 0 100%; height: 18px; margin-top: 4px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='18' viewBox='0 0 140 18'%3E%3Cg fill='%238f1a26' stroke='%238f1a26'%3E%3Cpath d='M0 1.2H140' stroke-width='2.2'/%3E%3Cpath d='M20 1.2V9' stroke-width='2.4'/%3E%3Ccircle cx='20' cy='10.4' r='2.3' stroke='none'/%3E%3Cpath d='M64 1.2V6' stroke-width='2.2'/%3E%3Ccircle cx='64' cy='7.2' r='1.9' stroke='none'/%3E%3Cpath d='M101 1.2V12.5' stroke-width='2.6'/%3E%3Ccircle cx='101' cy='14' r='2.6' stroke='none'/%3E%3Cpath d='M126 1.2V5' stroke-width='2'/%3E%3Ccircle cx='126' cy='6' r='1.7' stroke='none'/%3E%3C/g%3E%3C/svg%3E") left top / 140px 18px repeat-x;
+    opacity: 0.85;
+  }
+
+  /* Dots are blood drops */
+  .dot { border-radius: 0 50% 50% 50%; transform: rotate(45deg); }
+  .dot:hover { transform: rotate(45deg) scale(1.14); }
+  @media (max-width: 600px) { .dot:hover { transform: rotate(45deg); } }
+
+  /* Atmosphere layers (dark look only). The wrapper has no box, so the blending ones see the real page behind them. */
+  .fx { display: contents; }
+  .fx i { position: fixed; inset: 0; z-index: 40; pointer-events: none; display: none; }
+  :root[data-theme="dark"] .fx i { display: block; }
+  .fx-vig { background: radial-gradient(ellipse at 50% 45%, transparent 48%, rgba(0, 0, 0, 0.62) 100%); }
+  .fx-grain {
+    opacity: 0.07; mix-blend-mode: screen;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .fx-fog {
+    left: -12%; right: -12%; opacity: 0.9;
+    background:
+      radial-gradient(55% 32% at 18% 104%, rgba(160, 150, 175, 0.12), transparent 72%),
+      radial-gradient(50% 28% at 82% 106%, rgba(160, 150, 175, 0.10), transparent 72%),
+      radial-gradient(40% 20% at 52% 108%, rgba(140, 130, 160, 0.08), transparent 72%);
+    animation: fog-drift 46s ease-in-out infinite alternate;
+  }
+  @keyframes fog-drift { from { transform: translateX(-3%); } to { transform: translateX(3%); } }
+  .fx-desat { background: #808080; mix-blend-mode: saturation; opacity: calc(var(--loss, 0) * 0.8); }
+  .fx-hunger {
+    background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(150, 8, 24, 0.7) 100%);
+    opacity: 0; animation: heartbeat calc(2.9s - var(--hunger, 0) * 2s) ease-in-out infinite;
+  }
+  @keyframes heartbeat {
+    0%, 100% { opacity: calc(var(--hunger, 0) * 0.5); }
+    12% { opacity: calc(var(--hunger, 0) * 1); }
+    24% { opacity: calc(var(--hunger, 0) * 0.62); }
+    36% { opacity: calc(var(--hunger, 0) * 0.92); }
+    62% { opacity: calc(var(--hunger, 0) * 0.45); }
+  }
+  .fx-cracks { opacity: calc(var(--loss, 0) * 1.25); }
+  .fx-cracks::before, .fx-cracks::after {
+    content: ""; position: absolute; width: 38vmin; height: 38vmin; background-size: contain; background-repeat: no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M0 0 18 22 14 40 31 62 26 90 M18 22 46 26 60 50 M31 62 54 70 M14 40 3 58 M60 50 76 48' stroke='%23000' stroke-width='3.2' opacity='.7'/%3E%3Cpath d='M0 0 18 22 14 40 31 62 26 90 M18 22 46 26 60 50 M31 62 54 70 M14 40 3 58 M60 50 76 48' stroke='%23d9cdb5' stroke-width='1' opacity='.55'/%3E%3C/svg%3E");
+  }
+  .fx-cracks::before { top: 0; left: 0; }
+  .fx-cracks::after { bottom: 0; right: 0; transform: rotate(180deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .fx-fog { animation: none; }
+    .fx-hunger { animation: none; opacity: calc(var(--hunger, 0) * 0.6); }
+  }
+
+  /* Candle-lit headings */
+  :root[data-theme="dark"] h1, :root[data-theme="dark"] .sec-head h2 { text-shadow: 0 0 22px rgba(220, 42, 62, 0.28); animation: candle 6s ease-in-out infinite; }
+  @keyframes candle {
+    0%, 100% { text-shadow: 0 0 22px rgba(220, 42, 62, 0.28); }
+    18% { text-shadow: 0 0 28px rgba(220, 42, 62, 0.42); }
+    37% { text-shadow: 0 0 18px rgba(220, 42, 62, 0.22); }
+    58% { text-shadow: 0 0 30px rgba(236, 80, 60, 0.4); }
+    80% { text-shadow: 0 0 20px rgba(220, 42, 62, 0.26); }
+  }
+  @media (prefers-reduced-motion: reduce) { :root[data-theme="dark"] h1, :root[data-theme="dark"] .sec-head h2 { animation: none; } }
+
+  /* Dice: the Beast speaks */
+  .dice-note { flex: 1 1 100%; text-align: center; font-family: var(--display); font-size: 1.5rem; letter-spacing: 0.05em; color: var(--blood-strong); margin-top: 8px; }
+  .dice-note.messy { font-size: 1.9rem; animation: messy-pulse 0.7s ease-in-out 3; text-shadow: 0 0 16px rgba(220, 42, 62, 0.8); }
+  .dice-note.beast { font-size: 1.15rem; color: var(--ink-muted); }
+  .dice-box.flash-red { animation: red-flash 1.1s ease-out; }
+  @keyframes messy-pulse { 50% { transform: scale(1.12); } }
+  @keyframes red-flash { 0% { box-shadow: inset 0 0 120px 30px rgba(190, 20, 36, 0.8); } 100% { box-shadow: inset 0 0 0 0 rgba(190, 20, 36, 0); } }
+
+  /* Health doll: a splash of blood and a small jolt when a pin goes in */
+  .splat circle { fill: var(--blood-strong); opacity: 0.85; transform-box: fill-box; transform-origin: center; animation: splat 1.5s ease-out forwards; }
+  @keyframes splat { 0% { transform: scale(0.2); opacity: 0.95; } 25% { transform: scale(1); } 100% { transform: scale(1.1); opacity: 0; } }
+  .health-card.thud { animation: thud 0.26s ease-out; }
+  @keyframes thud { 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(-1px, 0); } }
+  @media (prefers-reduced-motion: reduce) { .splat circle, .health-card.thud { animation: none; opacity: 0; } }
+
   /* ---------- Print ---------- */
   @media print {
+    .fx i { display: none !important; }
+    .sec-head::after { display: none; }
+    .dot { transform: none !important; border-radius: 50% !important; }
+    h1, .sec-head h2 { text-shadow: none; animation: none; }
     body { background: #fff; color: #000; }
     .rail, .actions, .topbar, .toast, .dice-fab, .dice-modal, .sec-instruct, .stat .desc, .rp-intro { display: none !important; }
     .wrap { max-width: 100%; padding: 0 6px 10px; }
@@ -739,6 +842,8 @@
     .hero p.dek { display: none; }
   }
 </style>
+
+<div class="fx" aria-hidden="true"><i class="fx-vig"></i><i class="fx-grain"></i><i class="fx-fog"></i><i class="fx-desat"></i><i class="fx-hunger"></i><i class="fx-cracks"></i></div>
 
 <div class="gate" id="authGate">
   <div class="gate-box">
@@ -813,6 +918,7 @@
               <path class="mouth" d="M136 98 Q160 112 184 98"/>
               <path class="mouth" d="M144 96 v8 M154 100 v8 M166 100 v8 M176 96 v8"/>
             </g>
+            <g id="splatLayer" class="splat" pointer-events="none"></g>
             <g id="pinLayer"></g>
           </svg>
         </div>
@@ -2688,7 +2794,18 @@
 
   // ---- Rail ----
   var pathNameInput = document.getElementById("f_path_name");
+  // The page feels the character: Hunger sets the heartbeat glow, lost Humanity (below the starting 7) drains colour and cracks the edges.
+  function applyMood() {
+    var v = vitals || {};
+    var h = Math.max(0, Math.min(10, v.hunger || 0));
+    var loss = Math.max(0, Math.min(1, (7 - (v.humanity == null ? 7 : v.humanity)) / 7));
+    var st = document.documentElement.style;
+    st.setProperty("--hunger", (h / 10).toFixed(2));
+    st.setProperty("--loss", loss.toFixed(2));
+  }
+
   function updateRail() {
+    applyMood();
     document.querySelectorAll(".rail-chip[data-pool]").forEach(function (chip) {
       var pool = chip.dataset.pool;
       var rem = remaining(pool);
@@ -2855,7 +2972,27 @@
     health.pins.push({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, r: part.dataset.region });
     lastAdded = health.pins.length - 1;
     renderHealth(); save();
+    bloodSplat(p.x, p.y);
   });
+
+  // A few drops fly out from the new pin and fade; the card gives a small jolt.
+  var splatLayer = document.getElementById("splatLayer");
+  function bloodSplat(x, y) {
+    if (!splatLayer) return;
+    var NS = "http://www.w3.org/2000/svg", g = document.createElementNS(NS, "g");
+    for (var i = 0; i < 7; i++) {
+      var a = Math.random() * Math.PI * 2, d = 4 + Math.random() * 16;
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", (x + Math.cos(a) * d).toFixed(1));
+      c.setAttribute("cy", (y + Math.sin(a) * d).toFixed(1));
+      c.setAttribute("r", (1 + Math.random() * 3.2).toFixed(1));
+      g.appendChild(c);
+    }
+    splatLayer.appendChild(g);
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 1600);
+    var card = dollSvg.closest(".health-card");
+    if (card) { card.classList.remove("thud"); void card.offsetWidth; card.classList.add("thud"); }
+  }
 
   // Saved pins come from storage or another device, so check them before trusting them.
   function cleanPins(list) {
@@ -3766,6 +3903,22 @@
       chip.textContent = d.value;
       resultsEl.appendChild(chip);
     });
+    // The Beast: two or more 10s with a Hunger die among them is a Messy Critical; a Hunger 1 risks a Bestial Failure.
+    var tens = dice.filter(function (d) { return d.value === 10; }).length;
+    var hungerTen = dice.some(function (d) { return d.kind === "hunger" && d.value === 10; });
+    var hungerOne = dice.some(function (d) { return d.kind === "hunger" && d.value === 1; });
+    var note = null;
+    if (tens >= 2 && hungerTen) note = ["messy", "Messy Critical"];
+    else if (hungerOne) note = ["beast", "The Beast stirs. A Hunger 1 means Bestial Failure if the roll fails."];
+    var box = modal.querySelector(".dice-box");
+    if (box) box.classList.remove("flash-red");
+    if (note) {
+      var el = document.createElement("div");
+      el.className = "dice-note " + note[0];
+      el.textContent = note[1];
+      resultsEl.appendChild(el);
+      if (note[0] === "messy" && box) { void box.offsetWidth; box.classList.add("flash-red"); }
+    }
   }
 
   function openModal() {
