@@ -7,6 +7,7 @@
   var t = null;
   try { t = localStorage.getItem("kindred-theme"); } catch (e) {}
   document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+  try { if (sessionStorage.getItem("kindred-lock-seen") === "1" && !/[?&]lock(&|$)/.test(location.search)) document.documentElement.classList.add("lock-seen"); } catch (e) {}
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -842,6 +843,7 @@
   /* ---------- Lock screen: Caspar David Friedrich's "Abbey in the Oakwood" (public domain), animated.
      Swipe up, scroll, click or press a key to enter. ---------- */
   body.locked { overflow: hidden; }
+  .lock-seen .lock { display: none; }
   .lock {
     position: fixed; inset: 0; z-index: 3000; overflow: hidden; background: #07040a; touch-action: none;
     cursor: var(--cur-click, pointer); user-select: none; -webkit-user-select: none;
@@ -4302,7 +4304,7 @@
   "use strict";
   var el = document.getElementById("lockScreen");
   if (!el) return;
-  if (/[?&]nolock\b/.test(location.search)) { el.remove(); return; }
+  if (/[?&]nolock\b/.test(location.search) || document.documentElement.classList.contains("lock-seen")) { el.remove(); return; }
   var body = document.body;
   body.classList.add("locked");
 
@@ -4342,6 +4344,7 @@
   function open() {
     if (opened) return;
     opened = true;
+    try { sessionStorage.setItem("kindred-lock-seen", "1"); } catch (e) {} // choosing a character reloads the page; don't show the lock again
     el.classList.remove("dragging");
     el.classList.add("opening");
     el.style.transform = "translateY(-104%)";
